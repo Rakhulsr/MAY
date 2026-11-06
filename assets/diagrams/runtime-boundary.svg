@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="382" viewBox="0 0 420 382" role="img" aria-labelledby="title description" color="#202020">
+  <title id="title">MAY execution boundary</title>
+  <desc id="description">The user supplies the goal, scope, and approvals to the harness. MAY skills guide agent actions in the harness. The harness owns models, tools, permissions, and delegation, and invokes MAY Bash scripts through authorized shell commands for checks and temporary resources.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M 2 2 L 10 6 L 2 10" fill="none" stroke="#777777" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#777777" stroke-width="1.2" marker-end="url(#arrow)">
+      <path data-edge="user harness" d="M 100 90 Q 100 130 160 160"/>
+      <path data-edge="skills harness" d="M 320 90 Q 320 130 260 160" stroke-dasharray="7 7"/>
+      <path data-edge="harness scripts" d="M 210 242 Q 209 277 210 310"/>
+    </g>
+  </g>
+  <g fill="#ffffff" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <path data-node="user" d="M 30 16 Q 100 15 170 17 Q 180 17 180 27 L 179 79 Q 179 90 169 89 L 30 90 Q 20 90 21 79 L 20 27 Q 20 16 30 16 Z"/>
+    <path data-node="skills" d="M 250 16 Q 320 15 390 17 Q 400 17 400 27 L 399 79 Q 399 90 389 89 L 250 90 Q 240 90 241 79 L 240 27 Q 240 16 250 16 Z"/>
+    <path data-node="harness" d="M 81 160 Q 210 159 340 161 Q 350 161 350 171 L 349 231 Q 349 242 339 241 L 81 242 Q 70 242 71 231 L 70 171 Q 70 160 81 160 Z"/>
+    <path data-node="scripts" d="M 121 310 Q 210 309 300 311 Q 310 311 310 321 L 309 355 Q 309 366 299 365 L 121 366 Q 110 366 111 355 L 110 321 Q 110 310 121 310 Z"/>
+  </g>
+  <g fill="currentColor" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" text-anchor="middle">
+    <text x="100" y="39"><tspan font-weight="600">User</tspan><tspan x="100" dy="21" font-size="16">Goal, scope,</tspan><tspan x="100" dy="20" font-size="16">approvals</tspan></text>
+    <text x="320" y="45"><tspan font-weight="600">MAY skills</tspan><tspan x="320" dy="24" font-size="16">Workflow + roles</tspan></text>
+    <text x="210" y="185"><tspan font-weight="600">Harness</tspan><tspan x="210" dy="22" font-size="16">Models, tools, permissions</tspan><tspan x="210" dy="21" font-size="16">and delegation</tspan></text>
+    <text x="210" y="333"><tspan font-weight="600">MAY Bash scripts</tspan><tspan x="210" dy="22" font-size="16">Checks + temp files</tspan></text>
+  </g>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="16" text-anchor="middle" fill="currentColor">
+    <rect x="315" y="116" width="84" height="26" rx="3" fill="#ffffff"/>
+    <text x="357" y="135">Guidance</text>
+    <rect x="226" y="261" width="144" height="26" rx="3" fill="#ffffff"/>
+    <text x="298" y="280">Authorized shell</text>
+  </g>
+</svg>

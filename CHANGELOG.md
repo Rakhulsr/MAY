@@ -19,12 +19,14 @@
 - Chat plans include task inputs, outputs, dependencies, scoped actions, Definition of Done, and checkable acceptance. Only complex or risky plans need a fresh read-only critic; unavailable delegation is disclosed as self-check.
 - All eight roles give scope-specific recommendations; UX advice can use text, and operational/security concerns apply only where relevant. Existing helper dispatch remains pending a separate decision.
 - Root agent files share a MAY contributor development guide; installed workflow guidance remains in the canonical skills. npm packaging selects explicit public files, and repository checks reject public dependencies on private specifications.
+- Public documentation now starts with MAY's delegation responsibilities and onboarding, with workflow diagrams, a scoped verification example, and separate runtime, contributor, and security guides.
 
 ### Fixed
 
 - Every changed source and test delta, including tests-only repairs, requires renewed review acceptance before final QA; affected evidence becomes stale after source/test/build/fixture changes.
 - Temporary capture and cleanup target the run's exact session, with claims limited to observed scope rather than unrelated `may-*` folders.
 - Browser-check guidance separates agent-managed use from optional shell commands, reports unavailable tooling as blocked, and preserves failed-run diagnostics across tool calls until inspection and exact-session cleanup.
+- Workflow and runtime diagrams use packaged, editable SVG images instead of requiring Mermaid rendering in Markdown previews.
 
 ### Validation (2026-11-06)
 

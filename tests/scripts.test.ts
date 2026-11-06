@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
@@ -16,7 +16,7 @@ const run = (cwd: string, script: string, ...args: string[]) => spawnSync(bash, 
 /** A disposable copy of the files that would be pushed, as its own Git repo. */
 function copy(t: TestContext): string {
 	const dir = tempDir(t, "may-copy-");
-	for (const item of ["scripts", "skills", ".claude-plugin", ".codex-plugin", ".agents", ".omp-plugin", ".version-bump.json", "package.json", "package-lock.json", "AGENTS.md", ".gitignore"]) {
+	for (const item of ["scripts", "skills", "tests", ".claude-plugin", ".codex-plugin", ".agents", ".omp-plugin", ".version-bump.json", "package.json", "package-lock.json", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "CHANGELOG.md", "LICENSE", ".gitattributes", ".gitignore"]) {
 		cpSync(join(root, item), join(dir, item), { recursive: true });
 	}
 	git(dir, "init", "-q", "-b", "main");
@@ -90,13 +90,15 @@ test("check-repo fails when docs would be published", (t) => {
 	assert.match(out.stdout + out.stderr, /local specifications/);
 });
 
-test("check-repo fails when a tracked file depends on a local doc", (t) => {
-	const dir = copy(t);
-	writeFileSync(join(dir, "README.md"), "See do" + "cs/PRD.md for details.\n");
-	const out = run(dir, "scripts/check-repo.sh");
-	assert.notEqual(out.status, 0);
-	assert.match(out.stdout + out.stderr, /README\.md/);
-});
+for (const file of ["README.md", "AGENTS.md"]) {
+	test(`check-repo rejects a public ${file} dependency on local specifications`, (t) => {
+		const dir = copy(t);
+		writeFileSync(join(dir, file), "See do" + "cs/PRD.md for details.\n");
+		const out = run(dir, "scripts/check-repo.sh");
+		assert.notEqual(out.status, 0);
+		assert.ok((out.stdout + out.stderr).includes(file));
+	});
+}
 
 test("check-repo fails on a manifest that is not valid JSON", (t) => {
 	const dir = copy(t);
@@ -154,4 +156,78 @@ test("check-repo rejects obsolete storage references in publishable content", (t
 	const out = run(dir, "scripts/check-repo.sh");
 	assert.notEqual(out.status, 0);
 	assert.match(out.stdout + out.stderr, /README/);
+});
+
+const localProtocols = ["AGENTS.local.md", "CLAUDE.local.md", "GEMINI.local.md"];
+
+function personalProtocols(dir: string) {
+	for (const file of localProtocols) writeFileSync(join(dir, file), "Private: do" + "cs/plan/private.md\n");
+}
+
+function harnessCopy(dir: string, t: TestContext) {
+	const capture = tempDir(t, "may-published-");
+	const bin = join(dir, "bin");
+	mkdirSync(bin);
+	writeFileSync(join(bin, "pi"), '#!/usr/bin/env bash\nif [ "$1" = --version ]; then echo test-boundary; exit 0; fi\n[ "$1" = install ] || exit 2\ncp -R "$2/." "$MAY_CAPTURE/"\nexit 42\n', { mode: 0o755 });
+	writeFileSync(join(dir, "copy-probe.sh"), '#!/usr/bin/env bash\nexport PATH="$(dirname "$0")/bin:$PATH"\nbash "$(dirname "$0")/scripts/test-harness.sh" pi\n');
+	const out = spawnSync(bash, [join(dir, "copy-probe.sh")], {
+		cwd: dir, encoding: "utf8", timeout: 60000,
+		env: { ...process.env, MAY_CAPTURE: capture },
+	});
+	return { out, capture };
+}
+
+test("untracked personal protocols stay local without hiding other notes from checks", (t) => {
+	const dir = copy(t);
+	personalProtocols(dir);
+	const out = run(dir, "scripts/check-repo.sh");
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	for (const file of localProtocols) assert.match(git(dir, "ls-files", "--others", "--exclude-standard", "--", file), new RegExp(file));
+	mkdirSync(join(dir, "nested"));
+	for (const file of ["other.local.md", "nested/AGENTS.local.md"]) {
+		writeFileSync(join(dir, file), "do" + "cs/private.md\n");
+		const unsafe = run(dir, "scripts/check-repo.sh");
+		assert.notEqual(unsafe.status, 0);
+		assert.ok((unsafe.stdout + unsafe.stderr).includes(file));
+	}
+});
+
+for (const file of localProtocols) {
+	test(`staged ${file} blocks repository checks and harness publication`, (t) => {
+		const dir = copy(t);
+		writeFileSync(join(dir, file), "Private developer instructions\n");
+		git(dir, "add", "--", file);
+		const out = run(dir, "scripts/check-repo.sh");
+		assert.notEqual(out.status, 0, out.stdout + out.stderr);
+		assert.ok((out.stdout + out.stderr).includes(file));
+		const { out: harness, capture } = harnessCopy(dir, t);
+		assert.equal(harness.status, 1, harness.stdout + harness.stderr);
+		assert.ok((harness.stdout + harness.stderr).includes(file));
+		assert.ok(!existsSync(join(capture, "package.json")));
+	});
+}
+
+test("harness publication copies public protocols and skills without personal protocols", (t) => {
+	const dir = copy(t);
+	personalProtocols(dir);
+	const { out, capture } = harnessCopy(dir, t);
+	assert.equal(out.status, 42, out.stdout + out.stderr);
+	for (const file of localProtocols) assert.ok(!existsSync(join(capture, file)), file);
+	for (const file of ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "skills/using-may/SKILL.md", "skills/using-may/references/orchestration.md"]) {
+		assert.ok(readFileSync(join(capture, file), "utf8").length > 0, file);
+	}
+});
+
+test("npm package selection includes runtime and developer tools but excludes personal protocols", (t) => {
+	const dir = copy(t);
+	personalProtocols(dir);
+	const out = spawnSync(bash, ["-lc", "npm pack --dry-run --json --ignore-scripts --offline"], { cwd: dir, encoding: "utf8", timeout: 60000 });
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	const inventory = JSON.parse(out.stdout);
+	const packed = Array.isArray(inventory) ? inventory[0] : inventory.may;
+	const files = packed.files.map((file: { path: string }) => file.path) as string[];
+	for (const file of localProtocols) assert.ok(!files.includes(file), file);
+	for (const file of ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "LICENSE", "CHANGELOG.md", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".omp-plugin/marketplace.json", ".agents/plugins/marketplace.json", "scripts/check-repo.sh", "tests/scripts.test.ts", ".version-bump.json", "skills/using-may/scripts/may-session.sh"]) {
+		assert.ok(files.includes(file), file);
+	}
 });

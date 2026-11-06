@@ -64,8 +64,14 @@ for (const entry of readdirSync("skills", { withFileTypes: true })) {
 process.exit(bad ? 1 : 0);
 NODE
 
-# What a commit would publish: tracked files plus anything not ignored.
-publishable="$(git ls-files --cached --others --exclude-standard)"
+private_protocols="$(git ls-files --cached -- AGENTS.local.md CLAUDE.local.md GEMINI.local.md)"
+if [ -n "$private_protocols" ]; then
+	fail "private protocols are staged or tracked: $private_protocols"
+	exit 1
+fi
+
+# Inspect tracked and untracked public candidates, excluding only the three root personal protocols.
+publishable="$(git ls-files --cached --others --exclude-standard -- . ':(top,literal,exclude)AGENTS.local.md' ':(top,literal,exclude)CLAUDE.local.md' ':(top,literal,exclude)GEMINI.local.md')"
 
 local_specs='do''cs/'
 if printf '%s\n' "$publishable" | grep -qE "^$local_specs"; then
@@ -75,14 +81,14 @@ if printf '%s\n' "$publishable" | grep -qE '(^|/)node_modules/'; then
 	fail "node_modules would be published"
 fi
 
-# Only the contributor protocol and ignore rules may name local specifications.
+# Only the ignore rules may name local specification paths in public content.
 while IFS= read -r file; do
 	[ -f "$file" ] || continue
-	if [ "$file" != AGENTS.md ] && grep -Iiq 'sql''ite' "$file"; then
+	if grep -Iiq 'sql''ite' "$file"; then
 		fail "$file mentions removed storage technology"
 	fi
 	case "$file" in
-		AGENTS.md | .gitignore) continue ;;
+		.gitignore) continue ;;
 	esac
 	if grep -Iq "$local_specs" "$file"; then
 		fail "$file depends on local specifications"

@@ -1,9 +1,7 @@
 @AGENTS.md
 
-# Claude Code notes
+# MAY for Claude Code
 
-You are the coding agent building MAY. User-facing behavior is defined by the model-agnostic skills; permissions and native delegation belong to each harness.
+Use the runtime bootstrap in the adjacent `AGENTS.md`. Locate MAY's installed `using-may` skill through Claude Code's skill discovery, then read its canonical workflow and `references/claude-code-tools.md` relative to that skill. Work in the user's target project, not the plugin source directory.
 
-The developer authorized the planning docs in this package. Limit code changes to this repository and the implementation stage the user requested, and ask before destructive actions or scope expansion.
-
-Put rules that apply to every agent in `AGENTS.md`.
+This entry does not guarantee that plugin installation loads root instruction files. If the import is not available in the current context, read the adjacent `AGENTS.md` explicitly.

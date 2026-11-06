@@ -169,7 +169,11 @@ MAY's skills are advisory. They cannot enforce model compliance, provide a sandb
 
 ## Development
 
-Read [AGENTS.md](AGENTS.md) before contributing. [CHANGELOG.md](CHANGELOG.md) records the rebuild's changes and validation limits. Canonical skills live in `skills/`; root `scripts/` contains developer tools, not the runtime workflow.
+The root [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), and [GEMINI.md](GEMINI.md) are runtime bootstraps that route to the canonical `using-may` skill. Their discovery depends on the harness and installation route; plugin installation does not guarantee they are loaded. Canonical skills live in `skills/`; root `scripts/` contains developer tools, not the runtime workflow. [CHANGELOG.md](CHANGELOG.md) records the rebuild's changes and validation limits.
+
+For development of MAY itself, explicitly ask the agent to read your local `AGENTS.local.md`, with `CLAUDE.local.md` or `GEMINI.local.md` when relevant. These optional private contributor notes are not required to use MAY and are not distributed. Keep the three files untracked and not ignored; do not assume native discovery of any local filename. A checkout without them uses the public skills and your current development instructions.
+
+Stage and commit only explicit reviewed public paths. `npm run check` and the harness-copy script reject the three root personal protocol names if staged or tracked; the harness copy excludes their untracked copies, and npm packaging uses an explicit public-file allowlist. These guards do not prevent publication through Git if checks are bypassed. Other untracked files remain subject to the normal repository checks.
 
 For local OMP development, replace the placeholder with the absolute checkout path:
 

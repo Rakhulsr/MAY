@@ -18,6 +18,7 @@
 - Standalone planning reuses existing brainstorming and accepted plans without an external skill dependency. Adaptive questions distinguish independent simple choices from consequential decisions and offer explained recommendations with text fallback.
 - Chat plans include task inputs, outputs, dependencies, scoped actions, Definition of Done, and checkable acceptance. Only complex or risky plans need a fresh read-only critic; unavailable delegation is disclosed as self-check.
 - All eight roles give scope-specific recommendations; UX advice can use text, and operational/security concerns apply only where relevant. Existing helper dispatch remains pending a separate decision.
+- Public root agent entry files bootstrap the canonical runtime skills. Private contributor protocols remain optional, untracked local files; repository checks and harness-copy guards reject staged personal protocols, and npm packaging selects explicit public files.
 
 ### Fixed
 

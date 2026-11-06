@@ -13,6 +13,23 @@
   "engines": {
     "node": ">=26"
   },
+  "files": [
+    "skills/",
+    ".claude-plugin/",
+    ".codex-plugin/",
+    ".omp-plugin/",
+    ".agents/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "GEMINI.md",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "scripts/",
+    "tests/",
+    ".version-bump.json",
+    ".gitattributes"
+  ],
   "scripts": {
     "test": "node --test \"tests/*.test.ts\"",
     "check": "bash scripts/check-repo.sh",

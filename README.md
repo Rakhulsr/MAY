@@ -1,70 +1,127 @@
 # MAY: Maybe A Team You Need?
 
-MAY is a collection of skills and small scripts that gives coding agents an engineering-team workflow: understand the goal, plan, work by role, review, repair, verify, and report in chat.
+MAY gives coding agents a workflow for planning, implementation, review, and acceptance checks. It contains nine skills and three Bash scripts for Pi, Oh My Pi, Codex, and Claude Code. Small repairs stay with one agent; more complex work can use a coordinator and task-specific workers.
 
-The harness controls models, accounts, sessions, tools, and permissions. MAY is model-agnostic. It uses native delegation when the harness provides subagents; otherwise, work runs sequentially and review is not presented as independent.
+MAY uses your harness's configured models, accounts, tools, and permissions. It has no engine, database, persistent workflow state, or cross-session resume. Plans and reports stay in chat unless you ask for files.
 
-There is no engine, stored workflow state, or cross-session resume. Each new session starts by reading code and Git status. MAY is not a sandbox and cannot enforce model compliance with a skill.
+[Install](#install) · [Start a task](#start-a-task) · [How it works](#how-it-works) · [Skills](#skills) · [Runtime scripts](#runtime-scripts) · [Support and limitations](#support-and-limitations) · [Development](#development)
 
 ## Install
 
-Use your harness's plugin mechanism:
+Install MAY separately in each harness you use, then start a fresh session. These are the GitHub installation commands; the current rebuild has local installation proof, but installation from GitHub has not yet been tested. See [support and limitations](#support-and-limitations) for the observed results.
+
+### Pi
 
 ```bash
-# Pi
 pi install git:github.com/Rakhulsr/MAY
+```
 
-# Oh My Pi
+### Oh My Pi
+
+```bash
 omp plugin marketplace add Rakhulsr/MAY
 omp plugin install may@may
+```
 
-# Codex
+### Codex
+
+```bash
 codex plugin marketplace add Rakhulsr/MAY
 codex plugin add may@may
 ```
 
-Inside Claude Code:
+### Claude Code
+
+Run inside Claude Code:
 
 ```text
 /plugin marketplace add Rakhulsr/MAY
 /plugin install may@may
 ```
 
-The package contains `using-may` and eight roles: PM, Tech Lead, UI/UX, Frontend, Backend, QA, Security, and DevOps. Installation from GitHub has not been tested for this rebuild; local installation results appear in the support table.
+## Start a task
 
-## Use
+Open the project in your harness and describe the outcome you want. Name MAY explicitly:
 
-Describe your goal in chat, for example:
+```text
+Use MAY to fix login validation. Preserve my changes and prove the fix
+with a regression test.
+```
 
-> Use MAY to fix login validation. Preserve my changes and prove the fix with a regression test.
+For planning without implementation:
 
-The agent chooses Direct for small, low-risk repairs, with self-review explicitly identified as non-independent. Complexity or risk can justify separate implementation, read-only review, and QA tasks, rather than all eight workers. One PM **or** Tech Lead coordinator applies both planning lenses inline, uses native delegation and Vibe when active, and keeps one writer. Models and accounts follow the harness configuration.
+```text
+Use MAY to plan password reset for this app. Inspect the existing auth
+and email code, recommend an approach, and define acceptance checks.
+Keep the plan in chat; do not change files yet.
+```
 
-### Standalone planning and consultation
+The agent should inspect the code and Git status, reuse prior decisions, and ask only material unanswered questions. For a vague goal, it starts with an open question. It can batch simple independent choices; consequential or dependent decisions are discussed one at a time. You can answer “recommend for me” to delegate a choice and receive the rationale and tradeoffs.
 
-MAY can plan without an external brainstorming skill. Brainstorming explores alternatives; planning converges on the chosen direction and its deliverable. Existing brainstorming, accepted plans, previous decisions, and answers available in code are reused rather than asked for again.
+Planning works without an external brainstorming skill. An accepted plan identifies the goal, scope, tasks, dependencies, inputs, outputs, risks, and observable acceptance checks. Planning-only work ends with plan review, not application tests presented as proof of the plan.
 
-For vague needs, the agent starts with an open question. It can batch simple independent questions; complex, dependent, or consequential decisions are discussed one at a time. Interactive choices are used only when a native tool is available; otherwise, choices are numbered in chat. The agent explains its recommendation, reasons, and tradeoffs, and you can answer “recommend for me.” The agent chooses reversible low-risk details and records them in the plan. Existing approval remains valid for unchanged scope; new risky actions still require permission.
+## How it works
 
-A plan is ready when its goal, scope, context, justified implementation, material risks, and observable acceptance are clear. The task table includes IDs, roles, files/actions, dependencies, inputs, outputs/Definition of Done, and criteria. The acceptance matrix specifies exact commands or human actions with expected results. Planning-only work is assessed through plan review, not pretend application tests. Only complex or risky plans need a fresh read-only critic; without delegation, the agent discloses a self-check fallback.
+MAY uses the smallest team justified by the task:
 
-Each role gives product-specific best-practice recommendations, not a universal checklist. Security addresses relevant identity, data, trust, and abuse concerns. DevOps addresses operational needs within approved scope without automatically adding infrastructure. UX can use text examples; browser or image tools are not prerequisites for consultation. Implemented browser functionality still requires real browser verification.
+- Direct work suits a small, low-risk repair. One agent implements, self-reviews, and checks the change, disclosing that review is not independent.
+- Orchestrated work uses separate implementation, read-only review, and QA tasks when complexity or risk warrants them. One PM or Tech Lead coordinator applies both planning perspectives and keeps one writer at a time. It selects relevant roles rather than starting all eight.
 
-### Review before QA
+The workflow is:
 
-Every source **and test** delta, including tests-only repairs, requires reviewer acceptance before final QA. After repair, the new delta returns to the same reviewer; Direct work uses disclosed self-review. Changes to source, tests, builds, or fixtures invalidate affected evidence: renew review first, then run the affected checks.
+1. Inspect the project and agree on the outcome and acceptance checks. Reuse existing brainstorming, plans, and approvals for unchanged scope. Complex or risky plans get a fresh read-only critic when native delegation is available.
+2. Implement the scoped change using the relevant role guidance and existing project conventions.
+3. Review every source and test change before final QA. Repairs, including tests-only repairs, return to the same reviewer for renewed acceptance. After two unsuccessful repair rounds, the agent asks you how to proceed.
+4. Run the agreed checks against the reviewed candidate. Source, test, build, or fixture changes invalidate affected evidence and require renewed review before those checks run again.
+5. Report criterion-level evidence, review disposition, failures, untested work, and cleanup in chat.
 
-Verification uses the exact criterion commands and displays the `MAY VERIFY` table. Failed checks, zero-test runs, trivial checks, changes during execution, and timeouts do not count as passing. Outside Git, `PASS?` remains inconclusive with exit 1. The verifier recognizes common zero-test patterns, but assertion quality still requires review.
+Native delegation and active native modes such as Vibe remain under the harness's control. Without delegation, MAY uses sequential work and discloses non-independent review. Only the coordinator dispatches workers; workers do not spawn another team. Lightweight role helpers, including their cost, depth, and permission design, remain unresolved rather than an available feature.
+
+For the full planning, review, and reporting contract, read [orchestration](skills/using-may/references/orchestration.md). A new session starts from the code and Git status, not restored MAY workflow state.
+
+## Skills
+
+Roles are responsibility profiles, not mandatory agent processes. Each provides recommendations grounded in the project and approved scope. UX consultation can use text; Security and DevOps advice does not automatically add controls or infrastructure.
+
+| Skill | Use it for |
+|---|---|
+| [using-may](skills/using-may/SKILL.md) | Entry point, workflow selection, and harness-specific tool mappings |
+| [may-pm](skills/may-pm/SKILL.md) | Requirements, scope, priorities, and acceptance criteria |
+| [may-tech-lead](skills/may-tech-lead/SKILL.md) | Architecture, technical tradeoffs, task boundaries, and dependencies |
+| [may-ui-ux](skills/may-ui-ux/SKILL.md) | User flows, interaction design, accessibility, and visual review |
+| [may-frontend](skills/may-frontend/SKILL.md) | Components, client-side behavior, API integration, and browser regressions |
+| [may-backend](skills/may-backend/SKILL.md) | APIs, domain logic, data integrity, integrations, and backend tests |
+| [may-qa](skills/may-qa/SKILL.md) | Acceptance checks, regression coverage, and current-artifact evidence |
+| [may-security](skills/may-security/SKILL.md) | Threat modeling, auth, secrets, trust boundaries, and security review |
+| [may-devops](skills/may-devops/SKILL.md) | Development environments, builds, CI, and deployment risk |
 
 ## Runtime scripts
 
-Scripts are installed inside the skill, not the user's project. The agent obtains the absolute `using-may` location from the harness and invokes scripts through Bash:
+Scripts ship inside the installed `using-may` skill, not the project being worked on. Obtain that skill's absolute location from the harness and set `MAY_SKILL_DIR` to it. Run commands from the target project's directory, through Bash. On Windows, use Git Bash and quote paths with spaces.
+
+Session and verification scripts require Bash, Git, and core/system utilities. Node is required for MAY's repository tests, not for workflow state.
+
+| Script | Purpose |
+|---|---|
+| [may-session.sh](skills/using-may/scripts/may-session.sh) | Create marked OS-temp folders, track processes, and stop or recover a session |
+| [may-verify.sh](skills/using-may/scripts/may-verify.sh) | Run criterion commands and print a revision-aware `MAY VERIFY` table |
+| [may-e2e.sh](skills/using-may/scripts/may-e2e.sh) | Run the project's already-installed Playwright tests, optionally starting a local server |
+
+### Acceptance checks
+
+Replace `AC1` and the command with the plan's actual criterion and check:
 
 ```bash
 bash "$MAY_SKILL_DIR/scripts/may-verify.sh" --check "AC1=npm test" --timeout 600
 ```
 
-Use Git Bash on Windows and quote paths. Session and verification scripts require Bash, Git, and system utilities. For E2E without a trusted browser connection, `may-e2e.sh` requires Playwright **already installed in the project**, npx, and curl for server readiness:
+Repeat `--check "ID=command"` for additional criteria. The agent displays the complete `MAY VERIFY` table. Failed checks, common zero-test output, trivial commands, changes during execution, and timeouts do not count as passing. Outside Git, `PASS?` is inconclusive and the script exits 1. The verifier cannot assess assertion quality or establish browser build identity; review and appropriate browser evidence are still required.
+
+### Browser checks
+
+Implemented browser functionality needs real browser verification through a trusted connection or the optional E2E runner. The runner requires Playwright already installed in the target project, npx, and curl when waiting for a server. It does not install dependencies.
+
+Replace the spec, start command, and URL with the project's values:
 
 ```bash
 (
@@ -75,54 +132,62 @@ Use Git Bash on Windows and quote paths. Session and verification scripts requir
 )
 ```
 
-Exit 3 means Playwright is unavailable. MAY does not install it; the agent must ask permission. Non-loopback URLs require an explicit user request and `--remote-ok`, never production. Successful E2E artifacts are removed; failure artifacts remain in the session folder until inspected and cleaned.
+Exit 3 means Playwright is unavailable; installing it requires your permission. Non-loopback URLs require an explicit user request and `--remote-ok`; production is not an allowed target. Successful E2E artifacts are removed. Failure artifacts remain in the session folder until inspection and cleanup.
 
-Temporary files belong only in marked OS-temp folders. Stop the run's own session on failure or cancellation too; do not collect or delete every `may-*` folder. Cleanup claims cover only observed folders and processes. `stop --keep` stops processes but retains the folder for inspection. After an abrupt agent kill, use `stop` on the known folder. `sweep` is separate recovery for marked folders at least 24 hours old with no live recorded PID. There is no state folder in the home directory or project.
+### Cleanup and interruption
 
-## Rebuild support: observed evidence
+Stop the exact session created for the task, including after failure or cancellation. Do not collect or delete unrelated `may-*` folders. Cleanup reports cover only observed folders and processes.
 
-| Harness | Tested version | Level | Workflow evidence |
-|---|---|---|---|
-| Pi | 1.4.0 | `installable` | S1–S4 BLOCKED: configured model token expired; 1 attempt, no account/model change |
-| Oh My Pi | 18.16.0 | `installable` | Runtime checkpoint 45/45; pre-commit 43/45, then unchanged suite with diagnostic telemetry 45/45; repository check PASS; 10 pressure responses + 1 native planning smoke, not four final workflow scenarios |
-| Codex | 0.163.0 | `installable` | S1–S4 BLOCKED: configured sandbox read-only; 1 attempt, no permission change |
-| Claude Code | 2.1.318 | `installable` | Historical S1/S3/S4 PASS; S2 timed out after 420 seconds during review; retry had not started before the manual pause |
+`may-session.sh stop <dir> --keep` stops recorded processes but retains the folder for inspection. After an abrupt agent kill, use `stop <dir>` on the known folder. `sweep` recovers marked folders at least 24 hours old with no live recorded PID; `start` also runs this default stale-folder sweep. There is no MAY state folder in the project or home directory.
 
-`installable` means only that a real installation discovered nine skills and three runnable scripts. `workflow-tested` requires four real-model scenarios on the named version: a small repair, a feature with review before QA, fail-fix-pass, and interruption followed by a fresh session. Unit tests and fake models are not workflow evidence. This table follows actual attempts, not assumed compatibility.
+## Support and limitations
 
-The R7 timeout-race repair received **independent reviewer acceptance**. At that checkpoint, runtime code passed `npm test`: **45/45**, with no skips; `npm run check` also passed. Reinstallation in temporary homes, sequentially Pi, OMP, Codex, then Claude, discovered **9/9 skills and 3/3 scripts** on all four harnesses. These runs did not install or update the user's global plugin cache.
+The current rebuild is `installable` on the versions below. Local installation tests in temporary homes discovered all nine skills and three runnable scripts without updating the user's global plugin cache. This does not establish GitHub installation or complete workflow support.
 
-In the latest S4 run, the agent was stopped during a real check, then the recorded check process was stopped with identity guards. The EXIT trap cleaned the original folder; the next session started fresh without resume. The first follow-up accurately reported that PID-file evidence was no longer available, not that it had found a live process. A later sweep-age test used a **separate stale fixture**: a marked folder created through the script, with no PID, was aged 25 hours; default sweep in a fresh session printed the deleted path. That fixture was not residue from the original interrupted run. Interruption/cleanup evidence and age-policy evidence are distinct. All attempts, including the inconclusive follow-up and Claude timeout, were retained in the test record.
+| Harness | Tested version | Real-model workflow evidence |
+|---|---|---|
+| Pi | 1.4.0 | Blocked by an expired configured-model token; one attempt, no account or model change |
+| Oh My Pi | 18.16.0 | Manual workflow and native planning evidence; not all four final workflow scenarios |
+| Codex | 0.163.0 | Blocked by the configured read-only sandbox; one attempt, no permission change |
+| Claude Code | 2.1.318 | Historical small-repair, fail-fix-pass, and interruption scenarios passed; feature/review scenario timed out during review after 420 seconds, with no retry started before the manual pause |
 
-Planning and consultation guidance has been updated; historical results above do not establish `workflow-tested` status for the updated guidance. Manual testing found a missing plan acceptance matrix and QA before review of a tests-only repair; the guidance now states both gates explicitly. New evidence reflects actual runs, including failures, rather than conclusions inferred from wording. Lightweight role helpers, including cost, depth, and permissions, are **unresolved and outside this change**. The existing coordinator-only dispatch convention remains pending that decision. Real Playwright and Linux/macOS execution remain NOT_RUN.
+`workflow-tested` requires four real-model scenarios on the named harness version: a small repair, a feature with review before QA, fail-fix-pass, and interruption followed by a fresh session. Unit tests and fake models do not satisfy that requirement. Historical runs do not establish that status for later guidance changes.
 
-### Guidance validation (2026-11-06)
+MAY's skills are advisory. They cannot enforce model compliance, provide a sandbox, or grant permissions. Real Playwright execution, Linux/macOS execution, native interactive questions, and end-to-end coverage of every role remain untested.
 
-- Independent review accepted the guidance changes with no findings. Five pre-edit auth controls batched material/dependent questions; five post-edit responses started with access policy. Ten GREEN responses covered auth, accepted-plan reuse, Direct work, complex risk/tests-only repair, independent question batching, and Security/DevOps/UX recommendations. These runs supplied guidance text with tools disabled; they do not prove native tool invocation.
-- An OMP plan-only smoke read the installed entry skill, orchestration reference, OMP mapping, PM/Tech Lead, and relevant roles. One native read-only critic actually ran. Its findings were incorporated into a discovery-gated roadmap, with no second acceptance claimed. The two temporary fixture files stayed unchanged. This proves the prompted workflow, not autonomous critic-selection reliability.
-- The observed parent model was `openai-codex/gpt-6.1-sol`; the critic used the native default `openai-codex/gpt-6.1-sol:high`, without account/model overrides. Independent review accepted response and smoke evidence with no findings. The unavailable MCP `mxterm` connection warning was retained in the evidence.
-- After guidance acceptance, `npm test` passed **45/45**, with no skips, and `npm run check` passed through Windows Git Bash. Runtime, test source, and configuration were unchanged for that guidance adjustment.
-- Native interactive ask and browser execution remain NOT_RUN. All eight role texts were updated, but direct consultation scenarios sampled only Security/DevOps/UX; no end-to-end test of every role is claimed. Support remains `installable`, not `workflow-tested`.
+<details>
+<summary>Validation evidence and known test limitations (2026-11-06)</summary>
 
-### Latest pre-commit verification
+- Independent review accepted the runtime timeout-race repair. At that checkpoint, `npm test` passed 45/45 with no skips and `npm run check` passed. Subsequent local reinstallation succeeded on Pi, OMP, Codex, and Claude Code in temporary homes.
+- Guidance validation retained five pre-edit controls that failed the intended behavior and ten post-edit passing responses covering planning, accepted-plan reuse, Direct work, complex risk, tests-only repair, question batching, and Security/DevOps/UX advice. Those response tests supplied guidance with tools disabled; they do not prove native tool invocation.
+- An OMP plan-only smoke read installed skills and ran one native read-only critic. The agent incorporated its findings into the roadmap; no second acceptance was claimed. The two temporary fixture files stayed unchanged. The parent model was `openai-codex/gpt-6.1-sol`; the critic used the native default `openai-codex/gpt-6.1-sol:high`, without account or model overrides. An unavailable `mxterm` MCP connection warning remained in the evidence. Independent review accepted the guidance and evidence, but the smoke proves prompted behavior, not reliable autonomous critic selection.
+- After guidance acceptance, `npm test` passed 45/45 with no skips and `npm run check` passed through Windows Git Bash. The later pre-commit run passed 43/45: the fail-fix-pass fixture case and zero-test-output case returned null subprocess statuses under the helper's 15-second deadline. An unchanged full suite then passed 45/45 with temporary diagnostic telemetry; no null statuses, errors, or signals were recorded, and the longest synchronous child call took 8.55 seconds. A separate instrumented verifier probe produced the expected failure and cleaned its session. The original intermittent failure remains unexplained. A host deadline is suspected, but `ETIMEDOUT` was not observed; no timeout or assertion was changed to obtain a pass. The later pass does not erase the failures.
+- Interruption testing stopped an agent during a real check, stopped the recorded check process with identity guards, and observed the EXIT trap remove the original folder. The next session started fresh; its first follow-up was inconclusive because PID-file evidence was already gone. A separate marked, PID-free fixture aged 25 hours tested stale-folder sweep. That fixture was not residue from the interrupted run.
+- The latest recorded repository check and exact-session start/stop smoke passed. Runtime and test logic were unchanged for the guidance and comment cleanup. The planning-only smoke did not exercise browser workflows. Earlier manual OMP testing exercised Chromium registration, login, and logout; that does not establish real Playwright fallback coverage or the other untested scenarios listed above.
 
-The first pre-commit `npm test` run passed **43/45**, with **2 failures** and no skips. The failing cases were “a genuine failing regression becomes PASS only after repairing the fixture” and “all zero-test output forms are NO_TESTS.” Both returned a null subprocess status from the helper with a 15-second deadline; those failure records do not establish the child error code.
-
-A subsequent diagnostic run of the unchanged full suite passed **45/45**, with no skips. Temporary subprocess telemetry recorded no null statuses, errors, or signals; its longest observed synchronous child call took 8.55 seconds. A separate instrumented verifier probe returned the expected failing-check result and cleaned its session. The original intermittent failure remains unexplained: a host deadline is suspected, but `ETIMEDOUT` was not observed, and no timeout or assertion was changed to obtain a pass.
-
-`npm run check` passed, and a real session start/stop smoke removed its exact temporary folder. Comment cleanup changed no executable script bytes; runtime and test logic were unchanged. The passing diagnostic run does not erase the earlier failures.
+</details>
 
 ## Development
 
-Node 26+ is required for repository tests. The runtime package does not require a Node engine.
+Read [AGENTS.md](AGENTS.md) before contributing. [CHANGELOG.md](CHANGELOG.md) records the rebuild's changes and validation limits. Canonical skills live in `skills/`; root `scripts/` contains developer tools, not the runtime workflow.
+
+For local OMP development, replace the placeholder with the absolute checkout path:
+
+```bash
+omp plugin link "/absolute/path/to/may"
+```
+
+Start a fresh OMP session after linking. To load the checkout for one session instead, use `omp --plugin-dir "/absolute/path/to/may"`.
+
+Repository tests require Node 26+. On Windows, run these commands from Git Bash, not WSL Bash:
 
 ```bash
 npm test
 npm run check
-npm run test:harness
-bash scripts/bump-version.sh 0.2.0
 ```
 
-On Windows, run from Git Bash, not WSL Bash. `scripts/` contains developer tools only; runtime scripts live in `skills/using-may/scripts/`. Installation tests use temporary homes, not your global configuration.
+`npm run test:harness` runs local installation checks for Pi, OMP, Codex, and Claude Code in temporary homes. It requires those harnesses to be installed and does not prove real-model workflow behavior. `bash scripts/bump-version.sh <version>` updates the package and plugin manifest versions together.
 
-Contributors follow [AGENTS.md](AGENTS.md). License: [MIT](LICENSE).
+## License
+
+[MIT](LICENSE)

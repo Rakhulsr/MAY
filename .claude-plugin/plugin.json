@@ -1,0 +1,11 @@
+{
+  "name": "may",
+  "version": "0.1.0",
+  "description": "MAY (Maybe A Team You Need?): engineering team workflow for coding agents, as skills and small scripts.",
+  "author": {
+    "name": "Rakhulsr"
+  },
+  "repository": "https://github.com/Rakhulsr/MAY",
+  "license": "MIT",
+  "keywords": ["agent-skills", "engineering-team", "roles"]
+}

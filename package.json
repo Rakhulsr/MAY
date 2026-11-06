@@ -1,0 +1,26 @@
+{
+  "name": "may",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MAY (Maybe A Team You Need?): engineering team workflow for coding agents, as skills and small scripts.",
+  "repository": "https://github.com/Rakhulsr/MAY",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "agent-skills"
+  ],
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.ts\"",
+    "check": "bash scripts/check-repo.sh",
+    "test:harness": "bash scripts/test-harness.sh pi && bash scripts/test-harness.sh omp && bash scripts/test-harness.sh codex && bash scripts/test-harness.sh claude"
+  },
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  }
+}

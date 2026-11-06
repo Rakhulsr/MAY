@@ -1,0 +1,25 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, realpathSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import type { TestContext } from "node:test";
+
+export function tempDir(t: TestContext, prefix = "may-test-") {
+	const dir = realpathSync.native(mkdtempSync(join(tmpdir(), prefix)));
+	t.after(() => rmSync(dir, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }));
+	return dir;
+}
+
+export function git(cwd: string, ...args: string[]) {
+	return execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", ...args], {
+		cwd,
+		encoding: "utf8",
+		stdio: ["ignore", "pipe", "pipe"],
+	});
+}
+
+export function gitRepo(t: TestContext) {
+	const dir = tempDir(t, "may-repo-");
+	git(dir, "init", "-q", "-b", "main");
+	return dir;
+}

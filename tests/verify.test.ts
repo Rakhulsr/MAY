@@ -1,0 +1,182 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { test, type TestContext } from "node:test";
+import { git, gitRepo, tempDir } from "./helpers.ts";
+
+const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
+const script = fileURLToPath(new URL("../skills/using-may/scripts/may-verify.sh", import.meta.url)).replaceAll("\\", "/");
+
+function repo(t: TestContext) {
+	const dir = gitRepo(t);
+	writeFileSync(join(dir, "bug.cjs"), "if (1 + 1 !== 3) process.exit(1); console.log('# tests 1');\n");
+	git(dir, "add", ".");
+	git(dir, "commit", "-qm", "fixture");
+	return dir;
+}
+
+function run(cwd: string, checks: string[], extra: string[] = []) {
+	const before = git(cwd, "status", "--porcelain=v1", "-uall");
+	const out = spawnSync(bash, [script, ...checks.flatMap(check => ["--check", check]), ...extra], {
+		cwd, encoding: "utf8", timeout: 15000,
+	});
+	assert.equal(git(cwd, "status", "--porcelain=v1", "-uall"), before, "script must not write to repo");
+	return out;
+}
+
+test("a genuine failing regression becomes PASS only after repairing the fixture", (t) => {
+	const dir = repo(t);
+	let out = run(dir, ["AC1=node bug.cjs"]);
+	assert.equal(out.status, 1);
+	assert.match(out.stdout, /AC1\s+FAIL\s+exit=1/);
+	writeFileSync(join(dir, "bug.cjs"), "if (1 + 1 !== 2) process.exit(1); console.log('# tests 1');\n");
+	out = run(dir, ["AC1=node bug.cjs"]);
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC1\s+PASS\s+exit=0/);
+});
+
+test("all zero-test output forms are NO_TESTS", (t) => {
+	const dir = repo(t);
+	const patterns = ["ℹ tests 0", "# tests 0", "ℹ pass 0", "# pass 0", "No Tests Found", "no tests ran", "no test files", "0 passing", "ran 0 tests", "tests: 0 total"];
+	for (const pattern of patterns) {
+		writeFileSync(join(dir, "zero.cjs"), `console.log(${JSON.stringify(pattern)});`);
+		const out = run(dir, ["AC=node zero.cjs"]);
+		assert.equal(out.status, 1, out.stderr);
+		assert.match(out.stdout, /AC\s+NO_TESTS/);
+	}
+});
+
+test("trivial checks never execute shell side effects", (t) => {
+	const dir = repo(t);
+	const patterns = ["exit", "exit 0", "true", ":", "rem hi", "echo hi", "cmd /c exit 0", "node -e 0", 'node -e "process.exit(0)"', "node --version", "node -v", "npm --version"];
+	for (const command of patterns) {
+		const out = run(dir, [`AC=${command}; touch side-effect`]);
+		assert.equal(out.status, 1, out.stderr);
+		assert.match(out.stdout, /AC\s+TRIVIAL/);
+		assert.equal(existsSync(join(dir, "side-effect")), false);
+	}
+});
+
+test("source edits during verification are CHANGED, including same status untracked content", (t) => {
+	const dir = repo(t);
+	writeFileSync(join(dir, "change.cjs"), "require('fs').writeFileSync('untracked','after');console.log('# tests 1');");
+	writeFileSync(join(dir, "untracked"), "before");
+	const before = git(dir, "status", "--porcelain=v1", "-uall");
+	const out = spawnSync(bash, [script, "--check", "AC=node change.cjs"], { cwd: dir, encoding: "utf8", timeout: 15000 });
+	assert.equal(out.status, 1, out.stderr);
+	assert.match(out.stdout, /AC\s+CHANGED/);
+	assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
+	assert.equal(readFileSync(join(dir, "untracked"), "utf8"), "after");
+});
+
+// A real child process must be observed after OS-level timeout; fake parent timers cannot prove termination.
+test("timeout terminates check descendants and reports TIMEOUT", (t) => {
+	const dir = repo(t);
+	const ticks = join(tempDir(t), "ticks").replaceAll("\\", "/");
+	writeFileSync(join(dir, "slow.cjs"), `setInterval(()=>require('fs').appendFileSync(${JSON.stringify(ticks)},'x'),50);`);
+	const out = run(dir, ["AC=node slow.cjs"], ["--timeout", "1"]);
+	assert.equal(out.status, 1, out.stderr);
+	assert.match(out.stdout, /AC\s+TIMEOUT/);
+	const before = readFileSync(ticks, "utf8");
+	Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 300);
+	assert.equal(readFileSync(ticks, "utf8"), before);
+});
+
+test("one identical command runs once and covers both IDs", (t) => {
+	const dir = repo(t);
+	const count = join(tempDir(t), "count").replaceAll("\\", "/");
+	writeFileSync(join(dir, "count.cjs"), `require('fs').appendFileSync(${JSON.stringify(count)},'x'); console.log('# tests 1');`);
+	const out = run(dir, ["AC1=node count.cjs", "AC2=node count.cjs"]);
+	assert.equal(out.status, 0, out.stderr);
+	assert.equal(readFileSync(count, "utf8"), "x");
+	assert.match(out.stdout, /NOTE one command covers AC1, AC2/);
+});
+
+test("outside git uses PASS? and never success exit", (t) => {
+	const dir = tempDir(t);
+	writeFileSync(join(dir, "ok.cjs"), "console.log('# tests 1');");
+	const out = spawnSync(bash, [script, "--check", "AC=node ok.cjs"], { cwd: dir, encoding: "utf8", timeout: 15000 });
+	assert.equal(out.status, 1, out.stderr);
+	assert.match(out.stdout, /revision none/);
+	assert.match(out.stdout, /AC\s+PASS\?/);
+});
+
+test("nested invocation detects changed untracked sibling content across the whole repository", (t) => {
+	const dir = repo(t);
+	const nested = join(dir, "nested");
+	mkdirSync(nested);
+	writeFileSync(join(dir, "sibling"), "before");
+	writeFileSync(join(nested, "change.cjs"), "require('fs').writeFileSync('../sibling','after');console.log('# tests 1');");
+	const before = git(dir, "status", "--porcelain=v1", "-uall");
+	const out = spawnSync(bash, [script, "--check", "AC=node change.cjs"], { cwd: nested, encoding: "utf8", timeout: 15000 });
+	assert.equal(out.status, 1, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+CHANGED/);
+	assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
+});
+
+test("failed timeout termination still returns TIMEOUT and retains process recovery", { skip: process.platform !== "win32" }, (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may timeout ");
+	const bin = join(tmp, "bin");
+	mkdirSync(bin);
+	writeFileSync(join(bin, "taskkill"), "#!/usr/bin/env bash\nexit 1\n");
+	chmodSync(join(bin, "taskkill"), 0o755);
+	writeFileSync(join(dir, "slow.cjs"), "setInterval(()=>{},50);");
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec bash ${quote(script)} --check 'AC=node slow.cjs' --timeout 1`], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 12000,
+	});
+	try {
+		assert.equal(out.status, 1, out.stdout + out.stderr);
+		assert.match(out.stdout, /AC\s+TIMEOUT/);
+		assert.match(out.stdout, /Retained session:/);
+	} finally {
+		const cleanup = spawnSync(bash, ["-c", `for dir in ${quote(tmp.replaceAll("\\", "/"))}/may-*; do [ ! -d "$dir" ] || bash ${quote(script.replace("may-verify.sh", "may-session.sh"))} stop "$dir"; done`], {
+			cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 15000,
+		});
+		assert.equal(cleanup.status, 0, cleanup.stdout + cleanup.stderr);
+	}
+});
+
+test("a parent deadline stays bounded when auxiliary registration runs past the timeout", (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may delayed registration ");
+	const bin = join(tmp, "bin");
+	mkdirSync(bin);
+	const started = join(tmp, "check-started");
+	const delayed = join(tmp, "registration-delayed");
+	const timing = join(tmp, "timing.sh");
+	writeFileSync(timing, "kill() { if [ \"$1\" = -USR1 ]; then builtin kill \"$@\"; sleep 6; else builtin kill \"$@\"; fi; }\n");
+	writeFileSync(join(dir, "slow.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)},'started');setInterval(()=>{},50);`);
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	const realBash = spawnSync(bash, ["-lc", "command -v bash"], { encoding: "utf8", timeout: 5000 }).stdout.trim();
+	writeFileSync(join(bin, "bash"), `#!${realBash}
+if [[ "$1" == *may-session.sh ]] && [ "\${2:-}" = track ]; then
+ parent="$(cat /proc/$PPID/cmdline 2>/dev/null)"
+ if [[ "$parent" == *may-verify.sh* ]]; then
+  until [ -e ${quote(started)} ]; do sleep 0.02; done
+  touch ${quote(delayed)}
+  sleep 3
+ fi
+fi
+exec ${quote(realBash)} "$@"
+`);
+	chmodSync(join(bin, "bash"), 0o755);
+	const before = git(dir, "status", "--porcelain=v1", "-uall");
+	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec ${quote(realBash)} ${quote(script)} --check 'AC=node slow.cjs' --timeout 1`], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 15000,
+	});
+	try {
+		assert.equal(out.status, 1, `delayed=${existsSync(delayed)} started=${existsSync(started)}\n${out.stdout}${out.stderr}`);
+		assert.equal(existsSync(started), true, "the real check must run, not just its launcher");
+		assert.match(out.stdout, /AC\s+TIMEOUT/, out.stdout + out.stderr);
+		assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
+	} finally {
+		const cleanup = spawnSync(bash, ["-c", `for dir in ${quote(tmp.replaceAll("\\", "/"))}/may-*; do [ ! -d "$dir" ] || bash ${quote(script.replace("may-verify.sh", "may-session.sh"))} stop "$dir"; done`], {
+			cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 15000,
+		});
+		assert.equal(cleanup.status, 0, cleanup.stdout + cleanup.stderr);
+	}
+});

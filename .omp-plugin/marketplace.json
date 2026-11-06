@@ -1,0 +1,15 @@
+{
+  "name": "may",
+  "description": "Marketplace for the MAY plugin.",
+  "owner": {
+    "name": "Rakhulsr"
+  },
+  "plugins": [
+    {
+      "name": "may",
+      "source": "./",
+      "version": "0.1.0",
+      "description": "MAY (Maybe A Team You Need?): engineering team workflow for coding agents, as skills and small scripts."
+    }
+  ]
+}

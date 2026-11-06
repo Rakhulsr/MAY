@@ -1,7 +1,5 @@
 @./AGENTS.md
 
-# MAY runtime bootstrap
+# Gemini contributor notes
 
-Read the adjacent `AGENTS.md` for MAY's runtime entry protocol; if the import is not available, read it explicitly. Resolve canonical skill paths from the MAY installation, not the target project's working directory.
-
-This pointer does not establish a Gemini-specific tool mapping, tested Gemini support, or automatic loading of this file through plugin installation. If the canonical skill has no mapping for the current harness, disclose that limitation and use only available native tools.
+For development of MAY itself, follow the adjacent `AGENTS.md`; read it explicitly if its import is unavailable. User-facing workflow guidance remains in the canonical skills. This contributor pointer does not establish Gemini runtime integration, tested support, or additional permissions.

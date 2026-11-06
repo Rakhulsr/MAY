@@ -18,12 +18,13 @@
 - Standalone planning reuses existing brainstorming and accepted plans without an external skill dependency. Adaptive questions distinguish independent simple choices from consequential decisions and offer explained recommendations with text fallback.
 - Chat plans include task inputs, outputs, dependencies, scoped actions, Definition of Done, and checkable acceptance. Only complex or risky plans need a fresh read-only critic; unavailable delegation is disclosed as self-check.
 - All eight roles give scope-specific recommendations; UX advice can use text, and operational/security concerns apply only where relevant. Existing helper dispatch remains pending a separate decision.
-- Public root agent entry files bootstrap the canonical runtime skills. Private contributor protocols remain optional, untracked local files; repository checks and harness-copy guards reject staged personal protocols, and npm packaging selects explicit public files.
+- Root agent files share a MAY contributor development guide; installed workflow guidance remains in the canonical skills. npm packaging selects explicit public files, and repository checks reject public dependencies on private specifications.
 
 ### Fixed
 
 - Every changed source and test delta, including tests-only repairs, requires renewed review acceptance before final QA; affected evidence becomes stale after source/test/build/fixture changes.
 - Temporary capture and cleanup target the run's exact session, with claims limited to observed scope rather than unrelated `may-*` folders.
+- Browser-check guidance separates agent-managed use from optional shell commands, reports unavailable tooling as blocked, and preserves failed-run diagnostics across tool calls until inspection and exact-session cleanup.
 
 ### Validation (2026-11-06)
 

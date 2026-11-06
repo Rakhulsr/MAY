@@ -16,12 +16,6 @@ case "$harness" in
 esac
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-private_protocols="$(git -C "$root" ls-files --cached -- AGENTS.local.md CLAUDE.local.md GEMINI.local.md)"
-if [ -n "$private_protocols" ]; then
-	echo "FAIL: private protocols are staged or tracked: $private_protocols" >&2
-	exit 1
-fi
-
 if ! command -v "$harness" >/dev/null 2>&1; then
 	echo "SKIP $harness: not installed"
 	exit 3
@@ -39,7 +33,7 @@ native() {
 
 package="$work/package/may"
 mkdir -p "$package"
-(cd "$root" && git ls-files --cached --others --exclude-standard -z -- . ':(top,literal,exclude)AGENTS.local.md' ':(top,literal,exclude)CLAUDE.local.md' ':(top,literal,exclude)GEMINI.local.md') | while IFS= read -r -d '' file; do
+(cd "$root" && git ls-files --cached --others --exclude-standard -z) | while IFS= read -r -d '' file; do
 	[ -f "$root/$file" ] || continue
 	mkdir -p "$package/$(dirname "$file")"
 	cp "$root/$file" "$package/$file"

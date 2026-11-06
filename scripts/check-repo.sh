@@ -64,14 +64,8 @@ for (const entry of readdirSync("skills", { withFileTypes: true })) {
 process.exit(bad ? 1 : 0);
 NODE
 
-private_protocols="$(git ls-files --cached -- AGENTS.local.md CLAUDE.local.md GEMINI.local.md)"
-if [ -n "$private_protocols" ]; then
-	fail "private protocols are staged or tracked: $private_protocols"
-	exit 1
-fi
-
-# Inspect tracked and untracked public candidates, excluding only the three root personal protocols.
-publishable="$(git ls-files --cached --others --exclude-standard -- . ':(top,literal,exclude)AGENTS.local.md' ':(top,literal,exclude)CLAUDE.local.md' ':(top,literal,exclude)GEMINI.local.md')"
+# Inspect tracked and nonignored working-copy candidates before publication.
+publishable="$(git ls-files --cached --others --exclude-standard)"
 
 local_specs='do''cs/'
 if printf '%s\n' "$publishable" | grep -qE "^$local_specs"; then

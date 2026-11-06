@@ -46,7 +46,7 @@ A reviewer is read-only and assesses **every changed source and test delta** aga
 
 ## Verify exact criteria
 
-Resolve the installed `using-may` directory from the harness-provided skill location; do not assume it is in the project. Run scripts through Bash, explicitly Git Bash on Windows. With `MAY_SKILL_DIR` set to that absolute directory:
+Resolve the installed `using-may` directory from the harness-provided skill location; do not assume it is in the project. Run scripts through Bash, explicitly Git Bash on Windows. `MAY_SKILL_DIR` below is a per-shell convenience for that absolute directory, not required user/global configuration; resolve it again in later tool calls if shell variables are not preserved.
 
 ```bash
 bash "$MAY_SKILL_DIR/scripts/may-verify.sh" --check "AC1=node --test tests/login.test.js" --check "AC2=npm test"
@@ -56,18 +56,27 @@ Use the plan's exact checks and **display the complete MAY VERIFY output table**
 
 The verifier reports PASS, FAIL, NO_TESTS, TRIVIAL, CHANGED, or TIMEOUT. Outside Git, PASS? is inconclusive and exits 1. An unborn Git repository is labeled unborn. Zero-test output and trivial commands are not evidence. Shared commands execute once and identify every covered criterion. The script cannot judge weak assertions; reviewer acceptance remains necessary.
 
-Implemented browser functionality requires real browser verification, not screenshots alone. Prefer an available trusted connection; otherwise use the optional runner:
+Implemented browser functionality requires real browser verification, not screenshots alone. Use an available trusted native browser connection; otherwise write or select the appropriate regression and use the optional E2E runner only with the project's already-installed Playwright. If neither route is available, report the browser criterion as blocked and ask permission before installing anything. The runner executes tests rather than creating them; it additionally needs npx and curl for server readiness. UX planning or text examples alone do not require browser/image tools.
+
+For the runner, keep evidence available across tool calls:
+
+1. Create a marked session with `bash "$MAY_SKILL_DIR/scripts/may-session.sh" start` and record its printed absolute path in task/chat context before running E2E. Run from the target project; use its real spec, start command, and approved URL.
+2. Capture the runner exit even in shells using `set -e`:
 
 ```bash
-session="$(bash "$MAY_SKILL_DIR/scripts/may-session.sh" start)"
-bash "$MAY_SKILL_DIR/scripts/may-e2e.sh" --session "$session" --spec tests/login.spec.ts --start "npm run dev" --url http://localhost:3000
-bash "$MAY_SKILL_DIR/scripts/may-session.sh" stop "$session"
+if bash "$MAY_SKILL_DIR/scripts/may-e2e.sh" --session "$session" --spec tests/login.spec.ts --start "npm run dev" --url http://localhost:3000; then
+  code=0
+else
+  code=$?
+fi
 ```
 
-Ensure cleanup on failure or cancellation too. E2E exit 3 means Playwright unavailable: ask permission before installing anything. Use remote URLs only when explicitly requested, with `--remote-ok`, never production. Inspect failure artifacts before stopping the session. UX planning or text examples alone do not require browser/image tools.
+3. Exit `0` is pass: stop the exact session and check cleanup succeeded. Exit `1` is test/readiness/process-cleanup failure; exit `2` is invalid usage or a rejected target. For either, stop with `--keep`, inspect the retained logs/artifacts in the next tool call if necessary, then stop without `--keep` to delete the session. Exit `3` is Playwright unavailable, not a failed regression: clean the session, report blocked, and ask installation permission. Preserve the original result in the report; cleanup failure is an additional failure with the remaining path disclosed.
+
+Resolve the installed skill path and substitute the recorded absolute session path again in subsequent tool calls; do not assume `$session` or `$MAY_SKILL_DIR` survives. Never attach an unconditional deleting EXIT trap before evidence that must be inspected in another call. Use remote URLs only when explicitly requested, with `--remote-ok`, never production.
 
 ## Clean and report
 
-Temporary work and evidence belong only in a folder created by `scripts/may-session.sh start`. Track background process IDs with that script. Stop **the exact session you created**, including failure or cancellation; never wildcard all `may-*` folders to capture or clean evidence. Retain only explicitly requested evidence. If cleanup fails, report the marked path for recovery. An abrupt kill may require the next session to stop the known folder; optional sweep is separate recovery, not proof that this run cleaned only its own session.
+Temporary work and evidence belong only in a folder created by `scripts/may-session.sh start`. It holds logs, artifacts, and process identities, not durable workflow state. Track background process IDs with that script. Stop **the exact session you created**, including failure or cancellation; use `--keep` only while diagnostics need inspection, then remove that known session after inspection. Never wildcard all `may-*` folders to capture or clean evidence. If cleanup fails, report the marked path for recovery. Attempt cleanup on cancellation, but do not promise traps survive a forced kill. A later call or fresh session may stop the recorded absolute path. Stale-folder sweep requires the age and process/group guards; it is separate recovery, not proof that this run cleaned its own session.
 
 Report in chat, in the user's language: work performed; criterion/evidence table and actual verifier output when run; review findings/disposition; failed, stale, untested, blocked, or deferred work; human decisions; exact remaining temporary paths. Cleanup claims name only observed processes/folders. Start the next session from code and Git status, not restored MAY workflow state.

@@ -97,7 +97,7 @@ Roles are responsibility profiles, not mandatory agent processes. Each provides 
 
 ## Runtime scripts
 
-Scripts ship inside the installed `using-may` skill, not the project being worked on. Obtain that skill's absolute location from the harness and set `MAY_SKILL_DIR` to it. Run commands from the target project's directory, through Bash. On Windows, use Git Bash and quote paths with spaces.
+Normally, ask the agent for the outcome: “Use MAY to build login and test it in the browser.” The agent locates the installed `using-may` skill and runs the relevant commands from your target project. You do not need to configure a global `MAY_SKILL_DIR`; that name is only a shell convenience for the optional manual examples below. Scripts ship inside the skill, not your project.
 
 Session and verification scripts require Bash, Git, and core/system utilities. Node is required for MAY's repository tests, not for workflow state.
 
@@ -109,7 +109,7 @@ Session and verification scripts require Bash, Git, and core/system utilities. N
 
 ### Acceptance checks
 
-Replace `AC1` and the command with the plan's actual criterion and check:
+The agent runs the plan's actual criterion commands through the verifier. For optional manual use, resolve the installed skill's absolute path through your harness, set `MAY_SKILL_DIR` in that shell, and replace `AC1` with your criterion:
 
 ```bash
 bash "$MAY_SKILL_DIR/scripts/may-verify.sh" --check "AC1=npm test" --timeout 600
@@ -119,26 +119,64 @@ Repeat `--check "ID=command"` for additional criteria. The agent displays the co
 
 ### Browser checks
 
-Implemented browser functionality needs real browser verification through a trusted connection or the optional E2E runner. The runner requires Playwright already installed in the target project, npx, and curl when waiting for a server. It does not install dependencies.
+The agent chooses a route based on what is actually available:
 
-Replace the spec, start command, and URL with the project's values:
+| Available capability | What the agent does |
+|---|---|
+| Trusted native browser connection | Exercise the agreed flow and collect current browser evidence |
+| No trusted connection; Playwright already installed in the project | Write or select an appropriate browser regression, then run it through the optional E2E runner |
+| Neither route is available | Report browser verification as blocked and ask permission before installing anything |
+
+The runner executes tests; it does not create them. It needs Bash, Git, core/system utilities, npx, and the project's installed Playwright, plus curl when waiting for a server. A native browser connection is harness-dependent, not something MAY provisions. Non-loopback URLs require your explicit request and `--remote-ok`; production is not an allowed target.
+
+Runner exits are `0` for pass, `1` for test/readiness/process-cleanup failure, `2` for invalid usage or a rejected target, and `3` for Playwright unavailable. Unavailable means blocked, not a failed regression. Successful test artifacts are removed; failure artifacts must remain available until the agent inspects them.
+
+<details>
+<summary>Optional manual E2E command and failure inspection</summary>
+
+Use Git Bash on Windows and quote paths. Set `MAY_SKILL_DIR` to the skill's discovered absolute directory in this shell; replace the spec, start command, and URL with the project's values. The printed session path is needed if inspection takes another tool call: shell variables need not survive between calls.
 
 ```bash
 (
-  session="$(bash "$MAY_SKILL_DIR/scripts/may-session.sh" start)"
-  trap 'bash "$MAY_SKILL_DIR/scripts/may-session.sh" stop "$session"' EXIT
-  bash "$MAY_SKILL_DIR/scripts/may-e2e.sh" --session "$session" --spec tests/login.spec.ts --start "npm run dev" --url http://localhost:3000
-  # Inspect failure artifacts here before the block exits and cleanup runs.
+  session="$(bash "$MAY_SKILL_DIR/scripts/may-session.sh" start)" || exit 1
+  printf 'Session: %s\n' "$session"
+  cleanup() {
+    result=$?
+    trap - EXIT
+    if [ "$result" -eq 0 ] || [ "$result" -eq 3 ]; then
+      bash "$MAY_SKILL_DIR/scripts/may-session.sh" stop "$session" || exit 1
+    else
+      bash "$MAY_SKILL_DIR/scripts/may-session.sh" stop "$session" --keep || exit 1
+      printf 'Inspect retained diagnostics, then stop this session: %s\n' "$session"
+    fi
+    exit "$result"
+  }
+  trap cleanup EXIT
+  if bash "$MAY_SKILL_DIR/scripts/may-e2e.sh" --session "$session" --spec tests/login.spec.ts --start "npm run dev" --url http://localhost:3000; then
+    exit 0
+  else
+    exit "$?"
+  fi
 )
 ```
 
-Exit 3 means Playwright is unavailable; installing it requires your permission. Non-loopback URLs require an explicit user request and `--remote-ok`; production is not an allowed target. Successful E2E artifacts are removed. Failure artifacts remain in the session folder until inspection and cleanup.
+On failure or invalid usage, the exit trap stops recorded processes with `--keep`, leaving diagnostics for inspection in the next tool call. Pass and unavailable results clean the session; the original runner exit is preserved unless cleanup itself fails, which returns failure. A cleanup error requires recovery of the printed path, not a claim that cleanup succeeded.
+
+After inspecting retained logs and artifacts, resolve the installed skill path again if needed and delete only that known session:
+
+```bash
+bash "$MAY_SKILL_DIR/scripts/may-session.sh" stop "/absolute/session/path/printed/above"
+```
+
+</details>
 
 ### Cleanup and interruption
 
-Stop the exact session created for the task, including after failure or cancellation. Do not collect or delete unrelated `may-*` folders. Cleanup reports cover only observed folders and processes.
+The agent records the absolute session path in task/chat context, stops the exact session it created, and reports only observed cleanup. `stop <dir> --keep` stops recorded processes but retains files for inspection; after inspection, `stop <dir>` removes them. Do not collect or delete unrelated `may-*` folders.
 
-`may-session.sh stop <dir> --keep` stops recorded processes but retains the folder for inspection. After an abrupt agent kill, use `stop <dir>` on the known folder. `sweep` recovers marked folders at least 24 hours old with no live recorded PID; `start` also runs this default stale-folder sweep. There is no MAY state folder in the project or home directory.
+These temporary folders hold artifacts, logs, and process identities, not durable workflow state. On cancellation, attempt exact-session cleanup; retain diagnostics only while they still need inspection. An exit trap cannot guarantee recovery after a forced kill. A later tool call or fresh session can stop the known path without relying on lost shell variables.
+
+`sweep` is separate stale-folder recovery for marked sessions at least 24 hours old with no live recorded process/group; `start` also runs that default sweep. It does not prove that the interrupted run cleaned up. There is no MAY workflow-state folder in the project or home directory.
 
 ## Support and limitations
 
@@ -169,11 +207,9 @@ MAY's skills are advisory. They cannot enforce model compliance, provide a sandb
 
 ## Development
 
-The root [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md), and [GEMINI.md](GEMINI.md) are runtime bootstraps that route to the canonical `using-may` skill. Their discovery depends on the harness and installation route; plugin installation does not guarantee they are loaded. Canonical skills live in `skills/`; root `scripts/` contains developer tools, not the runtime workflow. [CHANGELOG.md](CHANGELOG.md) records the rebuild's changes and validation limits.
+Read [AGENTS.md](AGENTS.md) before developing MAY itself. [CLAUDE.md](CLAUDE.md) and [GEMINI.md](GEMINI.md) point contributors to that shared guide. Installed user-facing workflow guidance lives in the canonical `skills/`, not these root contributor files. Root `scripts/` contains developer tools. [CHANGELOG.md](CHANGELOG.md) records changes and validation limits.
 
-For development of MAY itself, explicitly ask the agent to read your local `AGENTS.local.md`, with `CLAUDE.local.md` or `GEMINI.local.md` when relevant. These optional private contributor notes are not required to use MAY and are not distributed. Keep the three files untracked and not ignored; do not assume native discovery of any local filename. A checkout without them uses the public skills and your current development instructions.
-
-Stage and commit only explicit reviewed public paths. `npm run check` and the harness-copy script reject the three root personal protocol names if staged or tracked; the harness copy excludes their untracked copies, and npm packaging uses an explicit public-file allowlist. These guards do not prevent publication through Git if checks are bypassed. Other untracked files remain subject to the normal repository checks.
+Review explicit public paths before staging or publication. npm packaging uses a public-file allowlist; the harness installation fixture copies tracked and nonignored working-copy candidates. Neither replaces review of the files you intend to publish.
 
 For local OMP development, replace the placeholder with the absolute checkout path:
 

@@ -1,6 +1,6 @@
 ---
 name: may-frontend
-description: Use when MAY needs implementation or review of frontend components, client-side state, accessible interactions, UI integration, browser behavior or frontend regression tests.
+description: Use when implementing or reviewing browser-facing components, client state, API-connected interactions, accessible forms, responsive behavior or frontend regressions.
 ---
 
 # MAY Frontend Engineer
@@ -19,15 +19,15 @@ Relevant acceptance criteria and UI/UX interaction spec; existing frontend archi
 
 ## Consultative planning
 
-Offer context-specific interaction and implementation recommendations using the existing components and API contract. Explain options, recommendation, reasons, and tradeoffs; ask relevant unanswered questions with the adaptive Q&A in `../using-may/references/orchestration.md`. For an existing server-rendered sign-in form, recommend reusing its validation/error patterns before adding a client framework. Choose and disclose reversible copy/layout details when delegated. Text examples can explain advice without browser/image tooling; implemented browser functionality still needs real browser evidence.
+Offer context-specific interaction and implementation recommendations using the existing components and API contract. Explain options, recommendation, reasons, and tradeoffs; ask relevant unanswered questions with the adaptive Q&A in `../may/references/orchestration.md`. For an existing server-rendered sign-in form, recommend reusing its validation/error patterns before adding a client framework. Choose and disclose reversible copy/layout details when delegated. Text examples can explain advice without browser/image tooling; implemented browser functionality still needs real browser evidence.
 
 ## Workflow
 
 1. Inspect relevant components, routing, state management, existing tests, data fetching, API contracts and styling conventions before editing.
 2. Clarify component boundaries, async states and error handling. Reuse established design tokens/components; do not introduce a second styling system without reason.
-3. Implement the smallest complete user-visible slice: semantics, interactions, validation, loading/empty/error/disabled states, responsive behavior and accessibility.
+3. Implement the smallest complete user-visible slice: semantics, interactions, validation, relevant loading/empty/error/disabled states, responsive behavior and accessibility.
 4. Follow assigned scope and inspect current changes before writing; ask the user before overlapping their uncommitted work.
-5. Never assume backend API fields exist; validate actual contracts or coordinate a minimal API change with Backend/Tech Lead.
+5. Validate actual API contracts; hand Backend/Tech Lead the endpoint, method, required fields, response/error semantics and affected UI states for any missing or changed contract.
 6. Test with available tooling: types, unit/component tests, lint/build, then browser/E2E for applicable journeys. Distinguish tests actually run from suggested tests.
 7. If using Playwright/MCP, ensure test browser points to the intended app/build and test environment, not an uncontrolled production account or live payment endpoint.
 8. Review performance and accessibility where relevant, but avoid unrelated refactoring. Fix targeted defects inside authorized scope and hand revision-aware evidence to QA.
@@ -55,4 +55,4 @@ Escalate when UX behavior is materially undefined, API changes break consumers, 
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../using-may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.

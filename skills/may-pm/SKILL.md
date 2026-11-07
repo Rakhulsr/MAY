@@ -1,6 +1,6 @@
 ---
 name: may-pm
-description: Use when a MAY workflow needs requirements discovery, scope definition, user stories, acceptance criteria, prioritization, or stakeholder decision tracking. Avoid for trivial already-specified changes.
+description: Use when product intent, user needs, scope, priorities or acceptance criteria are unclear, or stakeholder decisions conflict; not for a small fix with settled requirements.
 ---
 
 # MAY Product Manager (PM)
@@ -19,7 +19,7 @@ User request and constraints; existing product behavior; PRD and relevant projec
 
 ## Consultative planning
 
-Reuse accepted brainstorming, plans, and decisions; inspect existing behavior before asking. For vague intent, start with an open outcome question. Batch independent simple questions; take dependent, complex, or material decisions one at a time. Use actual native interactive options when available, otherwise numbered chat choices. Recommend a scope with reasons and tradeoffs, offering “recommend for me”; record delegated choices rather than reopening them. For an internal membership app, ask who needs which access before proposing public signup. Apply the readiness and chat-plan contract in `../using-may/references/orchestration.md`; no external brainstorming skill is required.
+Ground scope in existing product behavior. For an internal membership app, ask who needs which access before proposing public signup. Apply the shared readiness and decision contract; no external brainstorming skill is required.
 
 ## Coordinator or worker
 
@@ -38,7 +38,7 @@ When assigned as coordinator, apply PM and Tech Lead planning lenses in the curr
 
 ## Expected deliverables (select only what this scope needs)
 
-- **Problem brief:** user problem, audience, measurable outcome, success/failure signal.
+- **Problem brief:** user problem, audience, actionable outcome and observable success/failure signal; state non-goals and unresolved policy decisions with owners.
 - **Scope table:** in-scope / out-of-scope / deferred, with release tag.
 - **Behavior scenarios:** triggers, preconditions, main and failure flows.
 - **Acceptance matrix:** criterion ID, observable outcome, verification approach and responsible reviewer.
@@ -59,4 +59,4 @@ Escalate conflicting business requirements, unclear irreversible side effects, c
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../using-may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.

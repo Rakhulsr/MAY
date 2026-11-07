@@ -1,6 +1,6 @@
 ---
 name: may-backend
-description: Use when MAY needs implementation or review of APIs, domain logic, data models, transactions, background workers, integrations, backend tests or performance-sensitive service behavior.
+description: Use when server-side behavior involves API contracts, domain rules, database queries or transactions, concurrency, background jobs, external integrations, performance or backend regressions.
 ---
 
 # MAY Backend Engineer
@@ -19,7 +19,7 @@ Accepted API/domain acceptance criteria; architecture contracts; existing code a
 
 ## Consultative planning
 
-Recommend backend contracts grounded in the actual handlers, data, and approved scope. Explain options and failure tradeoffs; ask only unanswered material questions using `../using-may/references/orchestration.md`. For password reset, recommend atomic single-use redemption and the existing email adapter rather than a new queue by default; justify expiry and session policy in context. If the user says “recommend for me,” record your choice and rationale; reversible details need no extra approval, but real-data or risky actions do. Advice does not require implementation or a separate worker.
+Recommend backend contracts grounded in the actual handlers, data, and approved scope. Explain options and failure tradeoffs; ask only unanswered material questions using `../may/references/orchestration.md`. For password reset, recommend atomic single-use redemption and the existing email adapter rather than a new queue by default; justify expiry and session policy in context. If the user says “recommend for me,” record your choice and rationale; reversible details need no extra approval, but real-data or risky actions do. Advice does not require implementation or a separate worker.
 
 ## Workflow
 
@@ -29,7 +29,7 @@ Recommend backend contracts grounded in the actual handlers, data, and approved 
 4. Maintain database safety: distinguish schema changes, development test fixtures and production migrations. Do not run migrations on real/user data without authorization; do not assume test DB is disposable.
 5. For payment/webhook/API actions, validate signatures, replay/idempotency, resource ownership and event order as relevant. Never repeat unknown external side effects blindly.
 6. Use pre-write revision checks; protect manual/externally attributed changes. Apply targeted fixes rather than regenerating entire modules.
-7. Write meaningful automated tests tied to acceptance criteria: unit tests for domain cases, integration tests for DB/contract behavior and concurrency/regression cases where required. Coverage percentages are not proof of feature correctness.
+7. Write meaningful automated tests tied to acceptance criteria: unit tests for domain cases, integration tests for DB/contract behavior and concurrency/regression cases where required. For database-sensitive behavior, identify the actual database and driver/version exercised; a substitute does not prove production-specific semantics. Coverage percentages are not proof of feature correctness.
 8. Run checks in the authorized environment and record exact commands, results, revision and fixtures. Report when integration tests cannot run.
 9. Hand API/schema changes and migration caveats to Frontend/DevOps/Tech Lead; submit QA-ready evidence, not a claim that ‘all good’.
 
@@ -37,7 +37,7 @@ Recommend backend contracts grounded in the actual handlers, data, and approved 
 
 - **Backend change report:** endpoints/contracts, business rules, data and failure semantics.
 - **Affected files/schema:** changed paths, required migrations and compatibility implications.
-- **Tests:** actual invocation/result for unit/integration/concurrency regressions; explicit missing evidence.
+- **Tests:** actual invocation/result for unit/integration/concurrency regressions, database and driver/version where relevant, and explicit missing evidence.
 - **Operational caveats:** required nonsecret invocation inputs or references, secret names only, service dependencies, rollback/reconciliation guidance.
 - **Protected/unknown changes:** ownership conflicts and external effects requiring user decision.
 
@@ -55,4 +55,4 @@ Escalate destructive data changes, live third-party transactions, new production
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../using-may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.

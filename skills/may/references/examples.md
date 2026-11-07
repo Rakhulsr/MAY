@@ -59,7 +59,7 @@ Record the printed absolute session path before the next call. Use the actual sh
 
 ## Observed verification step
 
-The following command was actually run from a MAY source checkout against the existing session-script tests:
+The following command was actually run from a MAY source checkout against the existing session-script tests, before the entry skill was renamed from `using-may` to `may`:
 
 ```bash
 bash skills/using-may/scripts/may-verify.sh --check "AC1=node --test tests/session.test.ts"

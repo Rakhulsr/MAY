@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
-usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds]\n' >&2; exit 2; }
+usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output]\n' >&2; exit 2; }
 ids=() commands=() owners=() statuses=() codes=()
 seconds=600
+show_output=0
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --check)
@@ -12,6 +13,7 @@ while [ "$#" -gt 0 ]; do
    for existing in "${ids[@]}"; do [ "$id" != "$existing" ] || usage; done
    ids+=("$id"); commands+=("$cmd"); shift 2 ;;
   --timeout) [ "$#" -ge 2 ] && [[ "$2" =~ ^[1-9][0-9]*$ ]] || usage; seconds="$2"; shift 2 ;;
+  --show-output) show_output=1; shift ;;
   *) usage ;;
  esac
 done
@@ -118,8 +120,10 @@ for ((i=0; i<${#ids[@]}; i++)); do
  owner="${owners[$i]}"; status="${statuses[$owner]}"
  if [ "$initial" != "$final" ] && [ "$status" != TRIVIAL ] && [ "$status" != TIMEOUT ]; then status=CHANGED; fi
  printf '%s  %s  exit=%s  %s\n' "${ids[$i]}" "$status" "${codes[$owner]}" "${commands[$i]}"
- if [ "$status" = PASS ]; then passed=$((passed+1))
- elif [ -f "$work/$owner.log" ]; then printf '%s\n' "--- ${ids[$i]} output tail"; tail -n 40 "$work/$owner.log"; fi
+ if [ "$status" = PASS ]; then passed=$((passed+1)); fi
+ if [ -f "$work/$owner.log" ] && { [ "$status" != PASS ] || [ "$show_output" -eq 1 ]; }; then
+  printf '%s\n' "--- ${ids[$i]} output tail"; tail -n 40 "$work/$owner.log"
+ fi
  if [ "$owner" -eq "$i" ]; then
   names="${ids[$i]}"; count=1
   for ((j=i+1; j<${#ids[@]}; j++)); do if [ "${owners[$j]}" -eq "$i" ]; then names="$names, ${ids[$j]}"; count=$((count+1)); fi; done

@@ -1,6 +1,6 @@
 # MAY contributor protocol
 
-This guide governs agents developing MAY itself. User-facing workflow behavior belongs in the canonical [using-may skill](skills/using-may/SKILL.md) and its [orchestration contract](skills/using-may/references/orchestration.md). Keep contributor instructions separate from the installed workflow.
+This guide governs agents developing MAY itself. User-facing workflow behavior belongs in the canonical [may skill](skills/may/SKILL.md) and its [orchestration contract](skills/may/references/orchestration.md). Keep contributor instructions separate from the installed workflow.
 
 ## Product boundaries
 
@@ -13,9 +13,9 @@ This guide governs agents developing MAY itself. User-facing workflow behavior b
 
 | Location | Responsibility |
 |---|---|
-| `skills/using-may/SKILL.md` | Canonical workflow entry |
-| `skills/using-may/references/` | Orchestration contract and native harness mappings |
-| `skills/using-may/scripts/` | Bundled session, verification, and optional E2E runners |
+| `skills/may/SKILL.md` | Canonical workflow entry |
+| `skills/may/references/` | Orchestration contract and native harness mappings |
+| `skills/may/scripts/` | Bundled session, verification, and optional E2E runners |
 | `skills/may-*/SKILL.md` | Eight responsibility profiles |
 | `scripts/` | Repository checks, version maintenance, and isolated installation tests |
 | `tests/` | Node tests exercising the real Bash scripts and publication boundaries |
@@ -37,7 +37,7 @@ Maintain one first-party copy of each skill. Change canonical guidance rather th
 - Reuse existing conventions, standard tools, and native harness facilities. Prefer the smallest sufficient change; do not add speculative helpers, a second agent manager, compatibility aliases, or automatic model selection.
 - Before changing a harness, library, or API integration, or relying on unfamiliar CLI behavior, consult current official documentation for the installed version. Routine documentation edits do not require new tools, dependencies, or external lookups.
 - Keep context relevant to the current decision. Read targeted files and choose only justified roles or bounded native workers. Do not promise fixed token savings or start every role by default.
-- Keep runtime scripts inside the installed `using-may` skill. Resolve installed script paths through the harness rather than assuming they exist in the target project.
+- Keep runtime scripts inside the installed `may` skill. Resolve installed script paths through the harness rather than assuming they exist in the target project.
 - Support quoted Windows Git Bash paths and LF shell scripts. Preserve portable Unix process-group behavior while testing Windows process-tree shutdown and process-identity guards.
 - Runtime session and verification scripts depend on Bash, Git, and core/system utilities. The optional E2E runner uses the project's already-installed Playwright through npx, plus curl for server readiness; it must not install dependencies.
 

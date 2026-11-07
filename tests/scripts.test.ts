@@ -114,10 +114,11 @@ test("test-harness rejects an unknown harness without installing anything", () =
 
 
 test("the entry skill and every tool mapping ship with the plugin", () => {
-	const skill = readFileSync(join(root, "skills/using-may/SKILL.md"), "utf8");
-	assert.match(skill, /^name: using-may$/m);
+	const skill = readFileSync(join(root, "skills/may/SKILL.md"), "utf8");
+	assert.match(skill, /^name: may$/m);
+	assert.ok(!existsSync(join(root, "skills/using-may")), "obsolete entry skill must not be installed as an alias");
 	for (const harness of ["pi", "oh-my-pi", "codex", "claude-code"]) {
-		assert.ok(existsSync(join(root, `skills/using-may/references/${harness}-tools.md`)), harness);
+		assert.ok(existsSync(join(root, `skills/may/references/${harness}-tools.md`)), harness);
 		assert.match(skill, new RegExp(`references/${harness}-tools\\.md`));
 	}
 });
@@ -132,7 +133,7 @@ test("the scripts keep LF endings, so Git Bash can run them after a Windows chec
 
 test("check-repo rejects missing runtime scripts referenced by a skill reference", (t) => {
 	const dir = copy(t);
-	const file = join(dir, "skills/using-may/references/pi-tools.md");
+	const file = join(dir, "skills/may/references/pi-tools.md");
 	writeFileSync(file, readFileSync(file, "utf8") + "\nRun `scripts/missing-runtime.sh`.\n");
 	const out = run(dir, "scripts/check-repo.sh");
 	assert.notEqual(out.status, 0);
@@ -168,7 +169,7 @@ test("npm package selection includes public runtime and developer files but excl
 	const packed = Array.isArray(inventory) ? inventory[0] : inventory.may;
 	const files = packed.files.map((file: { path: string }) => file.path) as string[];
 	for (const file of personalFiles) assert.ok(!files.includes(file), file);
-	for (const file of ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "LICENSE", "CHANGELOG.md", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".omp-plugin/marketplace.json", ".agents/plugins/marketplace.json", "scripts/check-repo.sh", "tests/scripts.test.ts", ".version-bump.json", "skills/using-may/scripts/may-session.sh"]) {
+	for (const file of ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "LICENSE", "CHANGELOG.md", ".claude-plugin/plugin.json", ".codex-plugin/plugin.json", ".omp-plugin/marketplace.json", ".agents/plugins/marketplace.json", "scripts/check-repo.sh", "tests/scripts.test.ts", ".version-bump.json", "skills/may/scripts/may-session.sh"]) {
 		assert.ok(files.includes(file), file);
 	}
 });

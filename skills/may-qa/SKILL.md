@@ -1,6 +1,6 @@
 ---
 name: may-qa
-description: Use when MAY needs independent acceptance verification, unit/integration/E2E test strategy, regression coverage, reproducible bug reports, evidence recording or stale-test detection.
+description: Use when acceptance needs disproving checks, regression or browser test strategy, reproducible defects, current-candidate evidence, or assessment of unverified or stale results.
 ---
 
 # MAY Quality Assurance (QA) Engineer
@@ -19,15 +19,15 @@ Acceptance criterion IDs; workflow/task state; changed files and provenance; sou
 
 ## Consultative planning
 
-Recommend the smallest checks that can disprove this scope's acceptance criteria, with reasons and coverage tradeoffs. Reuse existing tests and accepted decisions; ask missing material questions through `../using-may/references/orchestration.md` rather than imposing every test category. A label correction needs its focused regression and scoped review, not a full browser suite; a permission change needs denial cases. Planning-only advice uses explicit human plan-review actions, not fake executable tests. Offer a recommendation when asked to choose, while keeping unapproved risky testing out of scope.
+Map each criterion to the smallest check that can disprove it. A label correction needs a focused regression; a permission change needs denial cases. Use human review actions for planning-only work. Follow the shared contract for decisions and permissions.
 
 ## Workflow
 
 1. Derive an acceptance matrix mapping each criterion to checks and evidence. Separate functional, regression, negative, security, accessibility and operational concerns as relevant.
-2. Inspect candidate code and tests. Require current acceptance of every changed source/test delta before final QA, including repairs and tests-only changes; return unreviewed deltas to the reviewer (or disclosed Direct self-review). User-provided code needs the same proof as agent-written code.
+2. Inspect candidate code and tests. When integration behavior is a material risk and an authorized, safe target, candidate and relevant regression are ready, run that regression early, even before review; label its result preliminary and record the target, candidate, command, exit and output. A missing or unsafe target is blocked, not passed. Require current acceptance of every changed source/test delta before final QA, including repairs and tests-only changes; return unreviewed deltas to the reviewer (or disclosed Direct self-review). User-provided code needs the same proof as agent-written code.
 3. Select the smallest meaningful test set. Prefer existing unit/integration tests; use browser E2E only for behaviors that require real UI/user flow. Do not call E2E merely to decorate reports.
-4. Run `../using-may/scripts/may-verify.sh` through Bash with the plan's exact criterion checks; display the complete output table. Resolve this path from the installed role skill, not the project root.
-5. For browser criteria use a trusted browser connection or `../using-may/scripts/may-e2e.sh`; confirm the test target. Screenshots alone do not prove behavior.
+4. Run `../may/scripts/may-verify.sh` through Bash with the plan's exact criterion checks; display the complete output table. Resolve this path from the installed role skill, not the project root.
+5. For browser criteria use a trusted browser connection or `../may/scripts/may-e2e.sh`; confirm the test target. Screenshots alone do not prove behavior.
 6. Any later source, test, build, or fixture change invalidates affected evidence. Renew acceptance of changed deltas first, then rerun affected checks before a passing claim; a tests-only repair cannot skip review.
 7. File actionable defects with severity, reproduction, observed vs expected, implicated criterion, exact evidence and minimal suggested rework scope.
 8. Recommend task results as verified / failed / stale / untested / inconclusive / blocked. A test that was never run is not PASS. A host-declined action is not executed.
@@ -54,4 +54,4 @@ Block completion when evidence is stale/incomplete, a browser targets unapproved
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../using-may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.

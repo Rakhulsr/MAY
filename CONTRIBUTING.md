@@ -2,7 +2,7 @@
 
 Contributions are welcome in:
 
-- Canonical workflow skills in `skills/using-may/` and scoped role guidance in `skills/may-*/`.
+- Canonical workflow skills in `skills/may/` and scoped role guidance in `skills/may-*/`.
 - Fixes to the small, deterministic Bash scripts, with behavioral regression tests.
 - Documentation, repository checks, and distribution metadata.
 - Integration mappings that connect the canonical skills to native facilities without duplicating the workflow.

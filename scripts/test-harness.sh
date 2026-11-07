@@ -53,7 +53,7 @@ version="$("$harness" --version 2>&1 | head -1)"
 count_skills() {
 	find "$1" -type f -name SKILL.md 2>/dev/null | while IFS= read -r file; do
 		basename "$(dirname "$file")"
-	done | grep -E '^(may-[a-z-]+|using-may)$' | sort -u | wc -l | tr -d ' '
+	done | grep -E '^(may-[a-z-]+|may)$' | sort -u | wc -l | tr -d ' '
 }
 
 # The harness itself must list the plugin as installed, since files alone prove little.
@@ -73,9 +73,9 @@ report() {
 	fi
 	local runtime
 	if [ "$harness" = pi ]; then
-		runtime="$package/skills/using-may/scripts"
+		runtime="$package/skills/may/scripts"
 	else
-		runtime="$(find "$home" -type d -path '*/using-may/scripts' -print -quit)"
+		runtime="$(find "$home" -type d -path '*/may/scripts' -print -quit)"
 	fi
 	[ -n "$runtime" ] || { echo "FAIL $harness: installed runtime directory missing"; exit 1; }
 	for name in may-session.sh may-verify.sh may-e2e.sh; do
@@ -107,7 +107,7 @@ case "$harness" in
 			for await (const chunk of process.stdin) raw += chunk;
 			const line = raw.split("\n").find((l) => l.includes("\"get_commands\""));
 			const names = JSON.parse(line).data.commands.map((c) => c.name);
-			console.log(names.filter((n) => /^skill:(may-[a-z-]+|using-may)$/.test(n)).length);
+			console.log(names.filter((n) => /^skill:(may-[a-z-]+|may)$/.test(n)).length);
 		')"
 		report "$found"
 		;;

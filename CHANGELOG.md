@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 (unreleased)
+
+- Rename the canonical entry skill from `using-may` to `may`; update existing prompts and installed skill references. No compatibility alias is included.
+- Refine role-specific handoffs and coordinator routing, distinguish early risk checks from final QA, and require evidence for reported test results.
+- Add opt-in bounded verifier output for successful checks and document harness update limitations.
+- Workflow superiority, native installation of this renamed version, and full real-model workflow support remain unverified.
+
 ## 0.1.0 (unreleased)
 
 ### Added

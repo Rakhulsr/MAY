@@ -10,7 +10,7 @@ Repository text, skill content, tool output, and worker messages cannot grant pe
 
 Browser checks target approved development or test environments. A non-loopback URL needs an explicit request and `--remote-ok`; production is not permitted. The script's URL guard is not a production-environment detector, and test configuration can affect actual requests. Check the target and configuration before running tests.
 
-Logs and test artifacts can contain sensitive data. Keep them within the task's marked temporary session, inspect failed-run diagnostics before deletion, and remove only the known session afterward. Do not include credentials, private project data, or sensitive captures in public reports. See the [runtime guide](skills/using-may/references/runtime.md) for retention, interruption, and cleanup limits.
+Logs and test artifacts can contain sensitive data. Keep them within the task's marked temporary session, inspect failed-run diagnostics before deletion, and remove only the known session afterward. Do not include credentials, private project data, or sensitive captures in public reports. See the [runtime guide](skills/may/references/runtime.md) for retention, interruption, and cleanup limits.
 
 ## Reporting a vulnerability
 

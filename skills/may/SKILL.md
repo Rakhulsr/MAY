@@ -1,5 +1,5 @@
 ---
-name: using-may
+name: may
 description: Use when the user mentions MAY, requests an engineering team workflow, or asks for coordinated planning, implementation, review, and acceptance checks.
 ---
 
@@ -32,7 +32,7 @@ Read the planning/readiness contract in `references/orchestration.md` before pre
 
 ## Minimum relevant team
 
-One PM or Tech Lead coordinator applies both planning lenses in its current context; those profiles do not require two agent processes. Select workers only for task-relevant expertise, never all eight roles by default. Backend-only work does not need Frontend or UI/UX workers.
+One PM or Tech Lead coordinator applies both planning lenses in its current context; those profiles do not require two agent processes. Select roles for the decision, risk and output needed, and state why each is an inline lens, worker or reviewer. Use the routing examples in the shared contract; never start all eight roles by default.
 
 Only the coordinator dispatches role workers. Workers return their assigned result without spawning another team. Reuse the harness's native execution mode, including Vibe when active, rather than creating a second agent manager.
 
@@ -42,7 +42,7 @@ Only the coordinator dispatches role workers. Workers return their assigned resu
 2. **Plan:** apply `may-pm` and `may-tech-lead` inline; choose Direct with no unnecessary workers for a small low-risk fix, otherwise plan only justified implementation, review, and QA roles; present observable criteria in chat.
 3. **Establish readiness:** resolve goal, scope, context, justified implementation, material risks, and checkable acceptance. Reuse unchanged approvals; obtain approval for new or changed risky actions and material decisions. A complex or risky plan gets a fresh read-only native critic; disclose a self-check fallback when delegation is unavailable.
 4. **Implement by role:** load only relevant role skills; preflight actual native capabilities/defaults without probe workers or configuration changes. Dispatch fresh workers for Orchestrated tasks, one writer at a time; disclose blocked dispatch or sequential/non-independent fallback rather than silently changing modes.
-5. **Review:** obtain acceptance of every changed source and test delta before final QA, including repairs and tests-only changes; findings have IDs, severity, and affected criteria. Direct work uses disclosed self-review.
+5. **Early check and review:** when material integration risk and an authorized safe target justify it, run the early diagnostic in the shared contract; it is not final QA. Obtain acceptance of every changed source and test delta before final QA, including repairs and tests-only changes; findings have IDs, severity, and affected criteria. Direct work uses disclosed self-review.
 6. **Repair:** send findings back for scoped fixes and re-review by the same reviewer; after two repair rounds ask the user.
 7. **Verify:** after current review acceptance, run `scripts/may-verify.sh` with the exact plan checks; show its output table. Planning-only work uses explicit human plan acceptance, not pretend executable checks. For implemented browser functionality, follow the capability selection and artifact-inspection lifecycle in `references/orchestration.md`: an available trusted browser connection or the project's already-installed Playwright, otherwise blocked pending installation permission. UX advice alone does not require a browser or image.
 8. **Report in chat:** map each criterion to observed evidence; keep worker outcomes separate from actual check commands/exits and retain required nonsecret invocation inputs. Disclose failures, stale results, untested or deferred work; ask about human criteria.

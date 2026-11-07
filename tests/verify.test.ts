@@ -7,7 +7,7 @@ import { test, type TestContext } from "node:test";
 import { git, gitRepo, tempDir } from "./helpers.ts";
 
 const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
-const script = fileURLToPath(new URL("../skills/using-may/scripts/may-verify.sh", import.meta.url)).replaceAll("\\", "/");
+const script = fileURLToPath(new URL("../skills/may/scripts/may-verify.sh", import.meta.url)).replaceAll("\\", "/");
 
 function repo(t: TestContext) {
 	const dir = gitRepo(t);
@@ -35,6 +35,26 @@ test("a genuine failing regression becomes PASS only after repairing the fixture
 	out = run(dir, ["AC1=node bug.cjs"]);
 	assert.equal(out.status, 0, out.stdout + out.stderr);
 	assert.match(out.stdout, /AC1\s+PASS\s+exit=0/);
+});
+
+test("successful check output is available only when explicitly requested", (t) => {
+	const dir = repo(t);
+	writeFileSync(join(dir, "evidence.cjs"), "console.log('target: disposable mysql'); console.log('# tests 1');\n");
+	const normal = run(dir, ["AC=node evidence.cjs"]);
+	assert.equal(normal.status, 0, normal.stdout + normal.stderr);
+	assert.doesNotMatch(normal.stdout, /target: disposable mysql/);
+	const shown = run(dir, ["AC=node evidence.cjs"], ["--show-output"]);
+	assert.equal(shown.status, 0, shown.stdout + shown.stderr);
+	assert.match(shown.stdout, /target: disposable mysql/);
+	writeFileSync(join(dir, "evidence.cjs"), "for (let i = 1; i <= 41; i++) console.log(`line-${i}`);\n");
+	const bounded = run(dir, ["AC=node evidence.cjs"], ["--show-output"]);
+	assert.equal(bounded.status, 0, bounded.stdout + bounded.stderr);
+	assert.doesNotMatch(bounded.stdout, /line-1\n/);
+	assert.match(bounded.stdout, /line-41/);
+	writeFileSync(join(dir, "evidence.cjs"), "console.log('no tests ran');\n");
+	const empty = run(dir, ["AC=node evidence.cjs"]);
+	assert.equal(empty.status, 1);
+	assert.match(empty.stdout, /no tests ran/);
 });
 
 test("all zero-test output forms are NO_TESTS", (t) => {

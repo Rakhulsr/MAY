@@ -1,6 +1,6 @@
 # Runtime guide
 
-Normally, ask for the outcome: “Use MAY to build login and test it in the browser.” The agent resolves the installed `using-may` skill and runs the relevant scripts from your target project. Scripts ship inside the skill, not your project. The [orchestration contract](orchestration.md) remains the canonical planning, review, and acceptance policy.
+Normally, ask for the outcome: “Use MAY to build login and test it in the browser.” The agent resolves the installed `may` skill and runs the relevant scripts from your target project. Scripts ship inside the skill, not your project. The [orchestration contract](orchestration.md) remains the canonical planning, review, and acceptance policy.
 
 ## What runs where
 
@@ -28,7 +28,7 @@ The agent runs the plan's actual criterion commands after current review accepta
 bash "$MAY_SKILL_DIR/scripts/may-verify.sh" --check "AC1=npm test" --timeout 600
 ```
 
-Repeat `--check "ID=command"` for more criteria. Identical commands execute once and identify all covered criteria. The agent displays the complete `MAY VERIFY` table. See an [observed verifier example](examples.md#observed-verification-step).
+Repeat `--check "ID=command"` for more criteria. Identical commands execute once and identify all covered criteria. The agent displays the complete `MAY VERIFY` table. To inspect output for a `PASS`, add `--show-output`: it prints the last 40 lines, not a complete log. The command string and output tails for non-PASS results are displayed even without this option; commands and output must be safe to disclose and must not contain secrets. Temporary logs are removed on successful cleanup; cleanup failure can retain them. See an [observed verifier example](examples.md#observed-verification-step).
 
 | Status | Meaning |
 |---|---|

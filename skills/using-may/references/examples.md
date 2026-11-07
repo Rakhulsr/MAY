@@ -14,6 +14,49 @@ plan and evidence report in chat.
 
 The agent should turn the request into a scoped plan using the [orchestration contract](orchestration.md), not copy a fixed team roster. The exact files, repair, and checks depend on the inspected project. For installed scripts, resolve the harness-provided skill directory as explained in the [runtime guide](runtime.md).
 
+## Mode and boundary examples
+
+These are illustrative chat lines, not observed worker runs or acceptance evidence:
+
+```text
+Mode: Direct | Workers: 0 | Review: self-review (not independent)
+Reason: one local helper repair, unchanged interface, focused regression.
+Ready: accepted repair scope; T1-T3 cover AC1; no material blocker.
+Review: candidate C1 (current source/test snapshot, including uncommitted files);
+self-review accepted; no open findings.
+QA: checked accepted C1 with the planned command and required inputs;
+report actual output and missing evidence, not an assumed PASS.
+```
+
+A response-contract change consumed by multiple UI surfaces needs a different assessment: explain the contract/regression risk, serialize shared-file writers, and justify independent review. Reading Backend, Frontend, PM, or Tech Lead profiles inline does not start those workers.
+
+```text
+Mode: Orchestrated | Planned: Backend, Frontend, review, QA |
+Started: 0 | Completed: 0 | Review: pending
+```
+
+Update this line with actual dispatch results. If native dispatch fails authentication or an override is denied, report the blocked worker and needed owner decision; do not silently change mode, model, account, or configuration. A permitted owner-approved recovery is a new authorized action, not an automatic retry.
+
+For an interrupted QA worker, a brief handoff might identify task/criteria, the reviewed candidate snapshot, reviewer acceptance, and `WORKER_FAILED | CHECK_PASSED exit=0` only after inspecting the known raw output and confirming its candidate binding. Include the exact check command, required nonsecret input such as `FIXTURE_MODULE=<resolved existing module path>`, and the recorded owned session/artifact paths. A missing input or inaccessible log leaves a gap; it does not authorize installing a dependency or inventing a result. Retain needed raw artifacts until inspection, then clean the exact session. This is same-session recovery context, not stored cross-session workflow state.
+
+## Windows shell selection
+
+Inspect the actual shell action and installed executables first. An unqualified `bash` may resolve to WSL rather than Git Bash. The following templates assume the paths have already been resolved from that inspection; they are not claims about a user's installation or required global configuration.
+
+If the shell action is PowerShell, `$gitBash` is the inspected Git Bash executable and `$maySkillDir` is the discovered installed skill directory:
+
+```powershell
+& $gitBash "$maySkillDir/scripts/may-session.sh" start
+```
+
+If the action accepts Bash-compatible executable invocation, use its inspected executable path explicitly (`GIT_BASH` here is a local convenience):
+
+```bash
+"$GIT_BASH" "$MAY_SKILL_DIR/scripts/may-session.sh" start
+```
+
+Record the printed absolute session path before the next call. Use the actual shell's invocation syntax and resolved paths again for verification or cleanup; do not assume shell variables survive tool calls.
+
 ## Observed verification step
 
 The following command was actually run from a MAY source checkout against the existing session-script tests:

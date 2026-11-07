@@ -20,12 +20,15 @@
 - All eight roles give scope-specific recommendations; UX advice can use text, and operational/security concerns apply only where relevant. Existing helper dispatch remains pending a separate decision.
 - Root agent files share a MAY contributor development guide; installed workflow guidance remains in the canonical skills. npm packaging selects explicit public files, and repository checks reject public dependencies on private specifications.
 - Public documentation now starts with MAY's delegation responsibilities and onboarding, with workflow diagrams, a scoped verification example, and separate runtime, contributor, and security guides.
+- Mode headers distinguish inline roles from planned, started, completed, or blocked workers; risk-based mode choices and short readiness/review/QA boundaries identify the current candidate and evidence gaps.
+- Role profiles share one required operating/handoff contract. Dispatch preflight preserves native defaults and permissions; interrupted-worker evidence retains exact commands, required nonsecret inputs, and inspectable temporary artifacts without persistent workflow state.
 
 ### Fixed
 
 - Every changed source and test delta, including tests-only repairs, requires renewed review acceptance before final QA; affected evidence becomes stale after source/test/build/fixture changes.
 - Temporary capture and cleanup target the run's exact session, with claims limited to observed scope rather than unrelated `may-*` folders.
 - Browser-check guidance separates agent-managed use from optional shell commands, reports unavailable tooling as blocked, and preserves failed-run diagnostics across tool calls until inspection and exact-session cleanup.
+- Mixed Go test output no longer counts a package's `[no test files]` line as proof that the entire command ran no tests when other packages provide test results.
 - Workflow and runtime diagrams use packaged, editable SVG images instead of requiring Mermaid rendering in Markdown previews.
 
 ### Validation (2026-11-06)

@@ -58,13 +58,19 @@ trivial() {
  [[ "$first" =~ $pattern ]]
 }
 no_tests() {
- local line
+ local line go_empty=0 go_passed=0
+ local go_package='^[[:space:]]*ok[[:space:]]+[^[:space:]]+[[:space:]]+([0-9]+(\.[0-9]+)?s|\(cached\))([[:space:]]+coverage:[[:space:]]+.*)?'
+ local go_no_files='^[[:space:]]*\?[[:space:]]+[^[:space:]]+[[:space:]]+\[no test files\][[:space:]]*$'
+ local go_no_run="${go_package}"'[[:space:]]+\[no tests to run\][[:space:]]*$'
+ local go_success="${go_package}"'[[:space:]]*$'
  shopt -s nocasematch
  while IFS= read -r line || [ -n "$line" ]; do
+  if [[ "$line" =~ $go_no_files ]] || [[ "$line" =~ $go_no_run ]]; then go_empty=1; continue; fi
   [[ "$line" =~ ^[[:space:]]*(ℹ|\#)[[:space:]]+(tests|pass)[[:space:]]+0([[:space:]]|$) ]] && return 0
   [[ "$line" =~ no[[:space:]]+tests[[:space:]]+(found|ran)|no[[:space:]]+test[[:space:]]+files|(^|[^0-9])0[[:space:]]+passing|ran[[:space:]]+0[[:space:]]+tests|tests:[[:space:]]+0[[:space:]]+total ]] && return 0
+  [[ "$line" =~ $go_success ]] && go_passed=1
  done < "$1"
- return 1
+ [ "$go_empty" -eq 1 ] && [ "$go_passed" -eq 0 ]
 }
 set -m
 for ((i=0; i<${#ids[@]}; i++)); do

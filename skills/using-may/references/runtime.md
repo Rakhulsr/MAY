@@ -42,6 +42,8 @@ Repeat `--check "ID=command"` for more criteria. Identical commands execute once
 
 Only `PASS` counts toward acceptance. Outside Git, `PASS?` exits 1; an unborn Git repository is labeled `unborn`. The verifier exits 0 only when all criteria pass and cleanup succeeds, 1 for a non-passing result, or 2 for invalid arguments. Shell interruption can produce a signal-related exit. Failed checks, common zero-test output, trivial commands, drift, and timeouts do not become passes.
 
+Go package summaries are combined only within the same check command: `[no test files]` or `[no tests to run]` means `NO_TESTS` only when no other package reports a successful timed or cached result. Other recognized empty-suite markers still reject the check. Cached results are not proof of fresh test execution.
+
 A passing command does not establish assertion quality, full requirement coverage, or browser build identity. Review and appropriate browser evidence are still necessary. Source, test, build, or fixture changes invalidate affected evidence: renew review acceptance, then rerun affected checks. Planning-only work uses human plan review, not invented executable evidence.
 
 ## Browser checks

@@ -48,6 +48,67 @@ test("all zero-test output forms are NO_TESTS", (t) => {
 	}
 });
 
+test("Go package summaries with and without tests pass in the same command", (t) => {
+	const dir = repo(t);
+	writeFileSync(join(dir, "go-output.cjs"), `process.stdout.write(${JSON.stringify("?   \texample.test/project/cmd\t[no test files]\nok  \texample.test/project/service\t0.123s\n")});`);
+	const out = run(dir, ["AC=node go-output.cjs"]);
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+PASS\s+exit=0/);
+	assert.match(out.stdout, /RESULT PASS 1\/1 passed/);
+});
+
+test("cached Go coverage summaries count before packages without selected tests", (t) => {
+	const dir = repo(t);
+	const report = "ok  \texample.test/project/service\t(cached)\tcoverage: 85.7% of statements\n?   \texample.test/project/cmd\t[no test files]\nok  \texample.test/project/other\t0.001s [no tests to run]\n";
+	writeFileSync(join(dir, "go-output.cjs"), `process.stdout.write(${JSON.stringify(report)});`);
+	const out = run(dir, ["AC=node go-output.cjs"]);
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+PASS\s+exit=0/);
+});
+
+for (const { name, report } of [
+	{
+		name: "Go packages all lack test files",
+		report: "?   \texample.test/project/cmd\t[no test files]\n?   \texample.test/project/model\t[no test files]\n",
+	},
+	{
+		name: "Go package has no selected tests",
+		report: "ok  \texample.test/project/service\t0.001s [no tests to run]\n",
+	},
+	{
+		name: "cached Go coverage package has no selected tests",
+		report: "ok  \texample.test/project/service\t(cached)\tcoverage: 0.0% of statements [no tests to run]\n",
+	},
+	{
+		name: "success-like log lines accompany empty Go packages",
+		report: "?   \texample.test/project/cmd\t[no test files]\nlog: ok example.test/project/service 0.123s\nok example.test/project/service complete\n",
+	},
+	{
+		name: "a non-Go empty suite follows a successful Go package",
+		report: "ok  \texample.test/project/service\t0.123s\n# tests 0\n",
+	},
+]) {
+	test(`${name} remain NO_TESTS`, (t) => {
+		const dir = repo(t);
+		writeFileSync(join(dir, "go-output.cjs"), `process.stdout.write(${JSON.stringify(report)});`);
+		const out = run(dir, ["AC=node go-output.cjs"]);
+		assert.equal(out.status, 1, out.stdout + out.stderr);
+		assert.match(out.stdout, /AC\s+NO_TESTS\s+exit=0/);
+		assert.match(out.stdout, /RESULT FAIL 0\/1 passed/);
+	});
+}
+
+test("successful Go checks cannot supply tests for a different empty check", (t) => {
+	const dir = repo(t);
+	writeFileSync(join(dir, "go-tests.cjs"), `process.stdout.write(${JSON.stringify("ok  \texample.test/project/service\t0.123s\n")});`);
+	writeFileSync(join(dir, "go-empty.cjs"), `process.stdout.write(${JSON.stringify("?   \texample.test/project/cmd\t[no test files]\n")});`);
+	const out = run(dir, ["TESTED=node go-tests.cjs", "EMPTY=node go-empty.cjs"]);
+	assert.equal(out.status, 1, out.stdout + out.stderr);
+	assert.match(out.stdout, /TESTED\s+PASS\s+exit=0/);
+	assert.match(out.stdout, /EMPTY\s+NO_TESTS\s+exit=0/);
+	assert.match(out.stdout, /RESULT FAIL 1\/2 passed/);
+});
+
 test("trivial checks never execute shell side effects", (t) => {
 	const dir = repo(t);
 	const patterns = ["exit", "exit 0", "true", ":", "rem hi", "echo hi", "cmd /c exit 0", "node -e 0", 'node -e "process.exit(0)"', "node --version", "node -v", "npm --version"];

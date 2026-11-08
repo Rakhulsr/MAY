@@ -15,6 +15,14 @@ session_path() {
  [ "$parent" = "$tmp_root" ] && [[ "$name" =~ ^may-.+ ]] && [ -f "$validated_session/.may-session" ] && [ ! -L "$validated_session/.may-session" ]
 }
 
+# Print a path that native Windows tools can open too (C:/... instead of MSYS /tmp/...).
+native_path() {
+ case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) cygpath -m "$1" 2>/dev/null && return 0 ;;
+ esac
+ printf '%s\n' "$1"
+}
+
 process_record() {
  local pid="$1" stat stamp group
  local fields=()
@@ -172,7 +180,7 @@ sweep() {
   fi
   [ "$alive" -eq 0 ] || continue
   remove_session "$dir"
-  printf '%s\n' "$dir"
+  native_path "$dir"
  done
 }
 
@@ -183,7 +191,7 @@ case "${1:-}" in
   sweep >/dev/null
   dir="$(mktemp -d "$tmp_root/may-XXXXXX")" || exit 1
   printf 'MAY session\n' > "$dir/.may-session"
-  printf '%s\n' "$dir" ;;
+  native_path "$dir" ;;
  stop)
   [ "$#" -ge 2 ] && [ "$#" -le 3 ] || { usage; exit 2; }
   keep=0
@@ -191,7 +199,7 @@ case "${1:-}" in
   session_path "$2" || { printf 'Refusing unsafe or unmarked session path: %s\n' "$2" >&2; exit 2; }
   dir="$validated_session"
   stop_recorded "$dir"
-  if [ "$keep" -eq 1 ]; then printf '%s\n' "$2"; else remove_session "$dir"; fi ;;
+  if [ "$keep" -eq 1 ]; then native_path "$dir"; else remove_session "$dir"; fi ;;
  sweep) shift; sweep "$@" ;;
  track)
   [ "$#" -eq 3 ] && [[ "$3" =~ ^[1-9][0-9]*$ ]] && [ "$3" -gt 1 ] || { usage; exit 2; }

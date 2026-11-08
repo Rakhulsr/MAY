@@ -241,34 +241,21 @@ test("failed timeout termination still returns TIMEOUT and retains process recov
 test("a parent deadline stays bounded when auxiliary registration runs past the timeout", (t) => {
 	const dir = repo(t);
 	const tmp = tempDir(t, "may delayed registration ");
-	const bin = join(tmp, "bin");
-	mkdirSync(bin);
 	const started = join(tmp, "check-started");
 	const delayed = join(tmp, "registration-delayed");
 	const timing = join(tmp, "timing.sh");
-	writeFileSync(timing, "kill() { if [ \"$1\" = -USR1 ]; then builtin kill \"$@\"; sleep 6; else builtin kill \"$@\"; fi; }\n");
-	writeFileSync(join(dir, "slow.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)},'started');setInterval(()=>{},50);`);
 	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
-	const realBash = spawnSync(bash, ["-lc", "command -v bash"], { encoding: "utf8", timeout: 5000 }).stdout.trim();
-	writeFileSync(join(bin, "bash"), `#!${realBash}
-if [[ "$1" == *may-session.sh ]] && [ "\${2:-}" = track ]; then
- parent="$(cat /proc/$PPID/cmdline 2>/dev/null)"
- if [[ "$parent" == *may-verify.sh* ]]; then
-  until [ -e ${quote(started)} ]; do sleep 0.02; done
-  touch ${quote(delayed)}
-  sleep 3
- fi
-fi
-exec ${quote(realBash)} "$@"
-`);
-	chmodSync(join(bin, "bash"), 0o755);
+	// Delay only the post-command registration: the check has already run (`started` exists) and the launcher re-enters `track`.
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ -e ${quote(started.replaceAll("\\", "/"))} ]; then touch ${quote(delayed.replaceAll("\\", "/"))}; sleep 6; fi\n`);
+	writeFileSync(join(dir, "slow.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)},'started');console.log('# tests 1');`);
 	const before = git(dir, "status", "--porcelain=v1", "-uall");
-	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec ${quote(realBash)} ${quote(script)} --check 'AC=node slow.cjs' --timeout 1`], {
+	const out = spawnSync(bash, [script, "--check", "AC=node slow.cjs", "--timeout", "1"], {
 		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 15000,
 	});
 	try {
 		assert.equal(out.status, 1, `delayed=${existsSync(delayed)} started=${existsSync(started)}\n${out.stdout}${out.stderr}`);
 		assert.equal(existsSync(started), true, "the real check must run, not just its launcher");
+		assert.equal(existsSync(delayed), true, "the post-command registration delay must run");
 		assert.match(out.stdout, /AC\s+TIMEOUT/, out.stdout + out.stderr);
 		assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
 	} finally {

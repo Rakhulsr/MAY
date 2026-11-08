@@ -19,7 +19,7 @@ function repo(t: TestContext) {
 function run(cwd: string, checks: string[], extra: string[] = []) {
 	const before = git(cwd, "status", "--porcelain=v1", "-uall");
 	const out = spawnSync(bash, [script, ...checks.flatMap(check => ["--check", check]), ...extra], {
-		cwd, encoding: "utf8", timeout: 15000,
+		cwd, encoding: "utf8", timeout: 30000,
 	});
 	assert.equal(git(cwd, "status", "--porcelain=v1", "-uall"), before, "script must not write to repo");
 	return out;
@@ -218,15 +218,19 @@ test("failed timeout termination still returns TIMEOUT and retains process recov
 	const tmp = tempDir(t, "may timeout ");
 	const bin = join(tmp, "bin");
 	mkdirSync(bin);
-	writeFileSync(join(bin, "taskkill"), "#!/usr/bin/env bash\nexit 1\n");
-	chmodSync(join(bin, "taskkill"), 0o755);
-	writeFileSync(join(dir, "slow.cjs"), "setInterval(()=>{},50);");
+	const started = join(tmp, "started");
+	const attempted = join(tmp, "taskkill-attempted");
 	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
-	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec bash ${quote(script)} --check 'AC=node slow.cjs' --timeout 1`], {
-		cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 12000,
+	writeFileSync(join(bin, "taskkill"), `#!/usr/bin/env bash\ntouch ${quote(attempted.replaceAll("\\", "/"))}\nexit 1\n`);
+	chmodSync(join(bin, "taskkill"), 0o755);
+	writeFileSync(join(dir, "slow.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)}, 'started'); setInterval(()=>{},50);`);
+	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec "$BASH" ${quote(script)} --check 'AC=node slow.cjs' --timeout 5`], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 30000,
 	});
 	try {
 		assert.equal(out.status, 1, out.stdout + out.stderr);
+		assert.equal(existsSync(started), true, "the check must start before its timeout");
+		assert.equal(existsSync(attempted), true, "cleanup must attempt the failing taskkill");
 		assert.match(out.stdout, /AC\s+TIMEOUT/);
 		const retained = out.stdout.match(/^Retained session: (.+)$/m)?.[1];
 		assert.ok(retained, out.stdout);

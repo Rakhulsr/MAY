@@ -119,3 +119,28 @@ for (const exitLeader of [false, true]) {
   }
  });
 }
+
+test("owned group cleanup includes a stopped member", (t) => {
+ const tmp = tempDir(t, "may tmp "); const dir = session(tmp, "may-stopped");
+ const childPid = join(tmp, "child-pid"); const release = join(tmp, "release");
+ const leader = `bash ${quote(join(root, script).replaceAll("\\", "/"))} track ${quote(dir)} $$; sleep 300 & echo $! > ${quote(childPid)}; while [ ! -e ${quote(release)} ]; do sleep 0.05; done`;
+ const launched = spawnSync(bash, ["-c", `set -m; bash -c ${quote(leader)} >/dev/null 2>&1 </dev/null & echo $!`], { encoding: "utf8", timeout: 5000, env: { ...process.env, TMPDIR: tmp } });
+ assert.equal(launched.status, 0, launched.stderr);
+ let child = "";
+ const alive = () => spawnSync(bash, ["-c", `kill -0 ${child}`], { timeout: 5000 }).status === 0;
+ try {
+  const waited = spawnSync(bash, ["-c", `until [ -s ${quote(childPid)} ]; do sleep 0.05; done`], { timeout: 5000 });
+  assert.equal(waited.status, 0);
+  child = readFileSync(childPid, "utf8").trim();
+  const paused = spawnSync(bash, ["-c", `kill -STOP ${child}; until { [ -r /proc/${child}/stat ] && [ "$(cut -d' ' -f3 /proc/${child}/stat)" = T ]; } || ps -o stat= -p ${child} 2>/dev/null | grep -q '^T'; do sleep 0.02; done`], { timeout: 5000 });
+  assert.equal(paused.status, 0, paused.stderr);
+  const stopped = run(tmp, "stop", dir);
+  assert.equal(stopped.status, 0, stopped.stdout + stopped.stderr);
+  assert.equal(alive(), false, `stopped group member ${child} survived cleanup`);
+  assert.equal(existsSync(dir), false);
+ } finally {
+  if (child && alive()) spawnSync(bash, ["-c", `kill -CONT ${child}; kill -KILL ${child}`], { timeout: 5000 });
+  writeFileSync(release, "go");
+  if (existsSync(dir)) run(tmp, "stop", dir);
+ }
+});

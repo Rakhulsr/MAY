@@ -39,6 +39,8 @@ group_members() {
  case "$(uname -s)" in
   MINGW*|MSYS*|CYGWIN*)
    while read -r pid parent pgid winpid rest; do
+    # Cygwin/MSYS prefix stopped (S) or terminal-blocked (I, O) rows with a status letter.
+    if [[ "$pid" =~ ^[A-Z]$ ]]; then read -r pid parent pgid winpid rest <<< "$parent $pgid $winpid $rest"; fi
     [[ "$pid" =~ ^[1-9][0-9]*$ ]] && [ "$pgid" = "$group" ] && pid_alive "$pid" && printf '%s\n' "$pid"
    done < <(ps -l) ;;
   *)

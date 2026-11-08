@@ -30,11 +30,14 @@ test("printed session paths open outside Bash", (t) => {
  const tmp = tempDir(t, "may tmp "); const out = run(tmp, "start"); assert.equal(out.status, 0, out.stderr);
  const dir = out.stdout.trim();
  assert.equal(existsSync(join(dir, ".may-session")), true, `${dir} is not a native path`);
- const kept = run(tmp, "stop", dir, "--keep"); assert.equal(kept.status, 0, kept.stderr); assert.equal(existsSync(dir), true);
+ const msysDir = process.platform === "win32" ? spawnSync(bash, ["-c", 'cygpath -u "$1"', "sh", dir], { encoding: "utf8", timeout: 5000 }).stdout.trim() : dir;
+ const kept = run(tmp, "stop", msysDir, "--keep"); assert.equal(kept.status, 0, kept.stderr); assert.equal(existsSync(dir), true);
+ assert.equal(kept.stdout.trim(), dir, "stop --keep must print the same native path as start, whatever form it was given");
+ assert.equal(existsSync(join(kept.stdout.trim(), ".may-session")), true);
  const stopped = run(tmp, "stop", dir); assert.equal(stopped.status, 0, stopped.stderr); assert.equal(existsSync(dir), false);
 });
 test("stop removes a validated session folder", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), false); });
-test("stop --keep leaves the folder and prints its path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir, "--keep"); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), true); assert.equal(out.stdout.trim(), dir); });
+test("stop --keep leaves the folder and prints its path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir, "--keep"); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), true); assert.equal(out.stdout.trim(), dir.replaceAll("\\", "/")); });
 test("stop rejects unsafe or unmarked targets without deleting them", (t) => {
  const tmp = tempDir(t, "may tmp "); const plain = join(tmp, "may-unmarked"); mkdirSync(plain); const outside = session(tempDir(t, "may outside "), "may-outside");
  for (const target of ["", ".", "/", process.env.HOME ?? process.env.USERPROFILE!, plain, outside]) { const out = run(tmp, "stop", target); assert.equal(out.status, 2, `${target}: ${out.stderr}`); }

@@ -26,7 +26,7 @@ Preserve unrelated contributor changes. Keep private specifications and personal
 
 ## Checks
 
-The repository checks require Node 26+, Bash, Git, and core/system utilities. These are test prerequisites, not requirements for choosing an editor or coding tool. On Windows, `npm test`, `npm run check`, and `npm run test:harness` run Git Bash, located from `git --exec-path`, rather than a bare `bash` that may be WSL Bash. Set `MAY_BASH` to the Bash executable to override that choice.
+The repository checks require Node 26+, Bash, Git, and core/system utilities. These are test prerequisites, not requirements for choosing an editor or coding tool. On Windows, `npm test`, `npm run check`, and `npm run test:harness` run Git Bash, located from `git --exec-path`, rather than a bare `bash` that may be WSL Bash; if that Git Bash is not found they fail with an error instead of falling back to `bash`. Set `MAY_BASH` to the Bash executable to override that choice.
 
 ```bash
 npm test

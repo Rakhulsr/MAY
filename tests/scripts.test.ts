@@ -1,21 +1,47 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
+import { resolveBash } from "../scripts/bash.ts";
 import { bash, git, tempDir } from "./helpers.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
 const run = (cwd: string, script: string, ...args: string[]) => spawnSync(bash, [join(cwd, script), ...args], { cwd, encoding: "utf8", timeout: 60000 });
 
-test("the npm script launcher runs Git Bash rather than WSL and keeps the exit code", () => {
+/** MAY_BASH unset and a `bash` that exits 97 first on PATH, as WSL's launcher would shadow Git Bash for cmd.exe. */
+function poisonedEnv(t: TestContext) {
+	const fake = tempDir(t, "may-wrong-bash-");
+	writeFileSync(join(fake, "bash.cmd"), "@echo wrong bash on PATH 1>&2\r\n@exit /b 97\r\n");
+	writeFileSync(join(fake, "bash"), "#!/bin/sh\necho wrong bash on PATH >&2\nexit 97\n", { mode: 0o755 });
 	const env = { ...process.env };
 	delete env.MAY_BASH;
-	const out = spawnSync(process.execPath, ["scripts/bash.ts", "-c", "uname -s; exit 7"], { cwd: root, env, encoding: "utf8", timeout: 30000 });
+	const key = Object.keys(env).find((name) => name.toLowerCase() === "path") ?? "PATH";
+	env[key] = `${fake}${delimiter}${env[key] ?? ""}`;
+	return env;
+}
+
+test("the npm script launcher runs Git Bash rather than WSL and keeps the exit code", (t) => {
+	const env = { ...process.env };
+	delete env.MAY_BASH;
+	const out = spawnSync(process.execPath, ["scripts/bash.ts", "-c", "uname -s; exit 7"], { cwd: root, env: process.platform === "win32" ? poisonedEnv(t) : env, encoding: "utf8", timeout: 30000 });
 	assert.equal(out.status, 7, out.stdout + out.stderr);
+	assert.doesNotMatch(out.stderr, /wrong bash on PATH/);
 	if (process.platform === "win32") assert.match(out.stdout, /^(MINGW|MSYS|CYGWIN)/, out.stdout + out.stderr);
+});
+
+test("npm run check runs Git Bash even when another bash comes first on PATH", { skip: process.platform !== "win32" }, (t) => {
+	const out = spawnSync("npm run check", { cwd: copy(t), env: poisonedEnv(t), shell: true, encoding: "utf8", timeout: 120000 });
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /Repository checks passed/);
+	assert.doesNotMatch(out.stdout + out.stderr, /wrong bash on PATH/);
+});
+
+test("resolveBash honors MAY_BASH and fails closed instead of falling back to a bare bash on Windows", (t) => {
+	assert.equal(resolveBash({ MAY_BASH: "C:/custom/bash.exe" }), "C:/custom/bash.exe");
+	if (process.platform === "win32") assert.throws(() => resolveBash({ PATH: tempDir(t, "may-empty-path-") }), /Git for Windows bin\/bash\.exe not found/);
 });
 
 /** A disposable copy of the files that would be pushed, as its own Git repo. */

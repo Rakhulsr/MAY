@@ -6,7 +6,7 @@
 - Refine role-specific handoffs and coordinator routing, distinguish early risk checks from final QA, and require evidence for reported test results.
 - Add opt-in bounded verifier output for successful checks and document harness update limitations.
 - Run the verifier's and E2E runner's helper processes and check commands with the same Bash that launched the script, instead of the first `bash` on `PATH`. On Windows, launching through Git's `usr/bin/bash.exe` no longer falls through to the WSL launcher.
-- On Windows Git Bash, session cleanup now finds stopped or terminal-blocked members of a recorded process group. `ps -l` prefixes those rows with a status letter, so `stop` previously skipped them, reported success, and deleted the session while they kept running.
+- On Windows Git Bash, session cleanup now finds stopped or terminal-blocked members of a recorded process group. `ps -l` prefixes those rows with a status letter, so `stop` previously skipped them, reported success, and deleted the session while they kept running. `track` and `sweep` use the same listing, so refreshed tracking records such members and an aged session is preserved while only a stopped member of an exited leader's group remains.
 - Workflow superiority, native installation of this renamed version, and full real-model workflow support remain unverified.
 
 ## 0.1.0 (unreleased)

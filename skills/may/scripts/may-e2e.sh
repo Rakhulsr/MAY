@@ -50,7 +50,7 @@ if [ -n "$start" ]; then
 fi
 BASE_URL="$url" "$BASH" -c 'session="$1"; dir="$2"; run="$3"; "$BASH" "$session" track "$dir" "$$" || exit; [ -d "$run" ] && [ ! -e "$run/cancel" ] || exit 143; shift 3; TMPDIR="$run" TEMP="$run" TMP="$run" npm_config_cache="$run/npm-cache" npx --no-install playwright test "$@"; code=$?; "$BASH" "$session" track "$dir" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$run_dir" "$spec" --output "$dir/e2e" --reporter=line >"$dir/playwright.log" 2>&1 & runner_pid=$!
 code=0; wait "$runner_pid" 2>/dev/null || code=$?
-if ! cleanup; then printf 'E2E FAIL: process cleanup failed; session retained at %s\nRESULT FAIL\n' "$dir"; exit 1; fi
+if ! cleanup; then printf 'E2E FAIL: process cleanup failed; session retained at %s\nRESULT FAIL\n' "$(native_path "$dir")"; exit 1; fi
 server_pid= runner_pid=
 if [ "$code" -eq 0 ]; then
  rm -rf "$dir/e2e"
@@ -58,6 +58,6 @@ if [ "$code" -eq 0 ]; then
 else
  printf 'E2E  FAIL  exit=%s  playwright test %s\n--- E2E output tail\n' "$code" "$spec"
  tail -n 40 "$dir/playwright.log"
- printf 'Artifacts: %s/e2e\nRESULT FAIL\n' "$dir"
+ printf 'Artifacts: %s\nRESULT FAIL\n' "$(native_path "$dir/e2e")"
  exit 1
 fi

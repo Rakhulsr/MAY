@@ -229,7 +229,9 @@ test("failed timeout termination still returns TIMEOUT and retains process recov
 	try {
 		assert.equal(out.status, 1, out.stdout + out.stderr);
 		assert.match(out.stdout, /AC\s+TIMEOUT/);
-		assert.match(out.stdout, /Retained session:/);
+		const retained = out.stdout.match(/^Retained session: (.+)$/m)?.[1];
+		assert.ok(retained, out.stdout);
+		assert.equal(existsSync(join(retained, ".may-session")), true, `${retained} is not a native path`);
 	} finally {
 		const cleanup = spawnSync(bash, ["-c", `for dir in ${quote(tmp.replaceAll("\\", "/"))}/may-*; do [ ! -d "$dir" ] || bash ${quote(script.replace("may-verify.sh", "may-session.sh"))} stop "$dir"; done`], {
 			cwd: dir, env: { ...process.env, TMPDIR: tmp }, encoding: "utf8", timeout: 15000,

@@ -142,6 +142,16 @@ test("a different bash earlier on PATH does not replace the running interpreter"
 	await assert.rejects(fetch(`http://127.0.0.1:${port}`));
 });
 
+test("a failed run prints an artifact path that opens outside Bash", (t) => {
+	const f = setup(t);
+	f.env.FAKE_EXIT = "1";
+	const out = run(f);
+	assert.equal(out.status, 1, out.stdout + out.stderr);
+	const artifacts = out.stdout.match(/^Artifacts: (.+)$/m)?.[1];
+	assert.ok(artifacts, out.stdout);
+	assert.equal(existsSync(join(artifacts, "trace.txt")), true, `${artifacts} is not a native path`);
+});
+
 for (const signal of ["TERM", "KILL"]) {
 	test(`server cleanup after ${signal}`, async (t) => {
 		const f = setup(t);

@@ -26,6 +26,13 @@ test("start creates a marked temp directory and prints only its path", (t) => {
  assert.equal(spawnSync(bash, ["-lc", 'test -e "$1"', "sh", `${dir}/.may-session`], { timeout: 5000 }).status, 0);
  assert.equal(out.stdout.trim().split(/\r?\n/).length, 1);
 });
+test("printed session paths open outside Bash", (t) => {
+ const tmp = tempDir(t, "may tmp "); const out = run(tmp, "start"); assert.equal(out.status, 0, out.stderr);
+ const dir = out.stdout.trim();
+ assert.equal(existsSync(join(dir, ".may-session")), true, `${dir} is not a native path`);
+ const kept = run(tmp, "stop", dir, "--keep"); assert.equal(kept.status, 0, kept.stderr); assert.equal(existsSync(dir), true);
+ const stopped = run(tmp, "stop", dir); assert.equal(stopped.status, 0, stopped.stderr); assert.equal(existsSync(dir), false);
+});
 test("stop removes a validated session folder", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), false); });
 test("stop --keep leaves the folder and prints its path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir, "--keep"); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), true); assert.equal(out.stdout.trim(), dir); });
 test("stop rejects unsafe or unmarked targets without deleting them", (t) => {

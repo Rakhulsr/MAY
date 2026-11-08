@@ -124,6 +124,24 @@ for (const code of ["0", "1"]) {
 	});
 }
 
+test("a different bash earlier on PATH does not replace the running interpreter", async (t) => {
+	const f = setup(t);
+	const bin = join(f.cwd, "bin");
+	const realBash = spawnSync(bash, ["-lc", "command -v bash"], { encoding: "utf8", timeout: 5000 }).stdout.trim();
+	const npx = join(bin, "npx");
+	writeFileSync(npx, readFileSync(npx, "utf8").replace("#!/usr/bin/env bash", `#!${realBash}`));
+	writeFileSync(join(bin, "bash"), "#!/bin/sh\necho 'wrong bash on PATH' >&2\nexit 97\n");
+	chmodSync(join(bin, "bash"), 0o755);
+	const port = await freePort();
+	const args = ["--session", f.dir, "--spec", "test.spec.js", "--start", server(f, port), "--url", `http://127.0.0.1:${port}`, "--wait", "5"];
+	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec "$BASH" ${quote(scripts + "may-e2e.sh")} "$@"`, "sh", ...args], {
+		cwd: f.cwd, env: f.env, encoding: "utf8", timeout: 15000,
+	});
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /RESULT PASS/);
+	await assert.rejects(fetch(`http://127.0.0.1:${port}`));
+});
+
 for (const signal of ["TERM", "KILL"]) {
 	test(`server cleanup after ${signal}`, async (t) => {
 		const f = setup(t);

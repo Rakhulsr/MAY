@@ -20,13 +20,13 @@ done
 [ "${#ids[@]}" -gt 0 ] || usage
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 session="$here/may-session.sh"
-work="$(bash "$session" start)"
+work="$("$BASH" "$session" start)"
 retain=0
 cleanup() {
  [ -n "$work" ] || return 0
  [ ! -d "$work" ] || touch "$work/cancel"
  if [ "$retain" -eq 1 ]; then printf 'Retained session: %s\n' "$work"; return 0; fi
- if ! bash "$session" stop "$work" >/dev/null; then printf 'Retained session: %s\n' "$work"; exit 1; fi
+ if ! "$BASH" "$session" stop "$work" >/dev/null; then printf 'Retained session: %s\n' "$work"; exit 1; fi
 }
 trap cleanup EXIT
 trap 'exit 130' INT
@@ -85,7 +85,7 @@ for ((i=0; i<${#ids[@]}; i++)); do
  statuses[$i]=TRIVIAL; codes[$i]='-'
  trivial "${commands[$i]}" && continue
  rm -f "$work/timedout" "$work/cancel"
- bash -c 'bash "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; bash -c "$3"; code=$?; bash "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
+ "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
  # SECONDS is integer-valued; rounding up prevents terminating a check early.
  deadline=$((SECONDS+seconds+1))
  while kill -0 "$pid" 2>/dev/null; do
@@ -95,7 +95,7 @@ for ((i=0; i<${#ids[@]}; i++)); do
  code=124
  if [ ! -e "$work/timedout" ]; then code=0; wait "$pid" 2>/dev/null || code=$?; fi
  touch "$work/cancel"
- if ! bash -c 'source "$1"; stop_recorded "$2" "$3"' sh "$session" "$work" "$pid" >"$work/cleanup.log" 2>&1 || ! bash "$session" stop "$work" --keep >>"$work/cleanup.log" 2>&1; then
+ if ! "$BASH" -c 'source "$1"; stop_recorded "$2" "$3"' sh "$session" "$work" "$pid" >"$work/cleanup.log" 2>&1 || ! "$BASH" "$session" stop "$work" --keep >>"$work/cleanup.log" 2>&1; then
   retain=1
   status=FAIL; [ ! -e "$work/timedout" ] || status=TIMEOUT
   printf 'MAY VERIFY\nrevision %s tree %s\n%s  %s  exit=%s  %s\n' "$revision" "$initial" "${ids[$i]}" "$status" "$code" "${commands[$i]}"
@@ -130,7 +130,7 @@ for ((i=0; i<${#ids[@]}; i++)); do
   [ "$count" -eq 1 ] || printf 'NOTE one command covers %s\n' "$names"
  fi
 done
-if ! bash "$session" stop "$work" >/dev/null; then
+if ! "$BASH" "$session" stop "$work" >/dev/null; then
  retain=1; printf 'RESULT FAIL cleanup incomplete\n'; exit 1
 fi
 work=

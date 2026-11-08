@@ -197,6 +197,23 @@ test("nested invocation detects changed untracked sibling content across the who
 	assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
 });
 
+test("a different bash earlier on PATH does not replace the running interpreter", (t) => {
+	const dir = repo(t);
+	writeFileSync(join(dir, "ok.cjs"), "console.log('# tests 1');\n");
+	const bin = tempDir(t, "may wrong bash ");
+	writeFileSync(join(bin, "bash"), "#!/bin/sh\necho 'wrong bash on PATH' >&2\nexit 97\n");
+	chmodSync(join(bin, "bash"), 0o755);
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	const before = git(dir, "status", "--porcelain=v1", "-uall");
+	const out = spawnSync(bash, ["-c", `export PATH=${quote(bin)}:$PATH; exec "$BASH" ${quote(script)} --check 'AC=node ok.cjs'`], {
+		cwd: dir, encoding: "utf8", timeout: 15000,
+	});
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+PASS\s+exit=0/);
+	assert.doesNotMatch(out.stdout + out.stderr, /wrong bash on PATH/);
+	assert.equal(git(dir, "status", "--porcelain=v1", "-uall"), before);
+});
+
 test("failed timeout termination still returns TIMEOUT and retains process recovery", { skip: process.platform !== "win32" }, (t) => {
 	const dir = repo(t);
 	const tmp = tempDir(t, "may timeout ");

@@ -18,7 +18,7 @@ The harness runs the agent and controls access. MAY skills guide its decisions; 
 | [may-verify.sh](../scripts/may-verify.sh) | Run criterion commands and print a revision-aware `MAY VERIFY` table |
 | [may-e2e.sh](../scripts/may-e2e.sh) | Run the project's already-installed Playwright tests, optionally starting a local server |
 
-Session and verification scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows and quote paths. The optional E2E runner also needs npx and installed Playwright, plus curl when waiting for a server. Node is required for MAY's repository tests, not workflow state. MAY does not provision a browser connection or install dependencies automatically.
+Session and verification scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows and quote paths. Only the initial invocation needs that explicit Bash: the scripts run their helpers and criterion commands with the same interpreter that launched them, regardless of which `bash` comes first on `PATH`. The optional E2E runner also needs npx and installed Playwright, plus curl when waiting for a server. Node is required for MAY's repository tests, not workflow state. MAY does not provision a browser connection or install dependencies automatically.
 
 ## Acceptance checks
 

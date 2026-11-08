@@ -39,7 +39,7 @@ trap 'exit 143' TERM
 set -m
 if [ -n "$start" ]; then
  command -v curl >/dev/null 2>&1 || { printf 'E2E FAIL: curl is required for server readiness\nRESULT FAIL\n'; exit 1; }
- bash -c 'bash "$1" track "$2" "$$" || exit; [ -d "$4" ] && [ ! -e "$4/cancel" ] || exit 143; bash -c "$3"; code=$?; bash "$1" track "$2" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$start" "$run_dir" >"$dir/server.log" 2>&1 & server_pid=$!
+ "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$4" ] && [ ! -e "$4/cancel" ] || exit 143; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$start" "$run_dir" >"$dir/server.log" 2>&1 & server_pid=$!
  ready=0; deadline=$((SECONDS+seconds))
  while [ "$SECONDS" -lt "$deadline" ]; do
   if curl --silent --fail --max-time 1 "$url" >/dev/null 2>&1; then ready=1; break; fi
@@ -48,7 +48,7 @@ if [ -n "$start" ]; then
  done
  if [ "$ready" -ne 1 ]; then printf 'E2E FAIL: server did not become ready\n--- server output tail\n'; tail -n 40 "$dir/server.log"; printf 'RESULT FAIL\n'; exit 1; fi
 fi
-BASE_URL="$url" bash -c 'session="$1"; dir="$2"; run="$3"; bash "$session" track "$dir" "$$" || exit; [ -d "$run" ] && [ ! -e "$run/cancel" ] || exit 143; shift 3; TMPDIR="$run" TEMP="$run" TMP="$run" npm_config_cache="$run/npm-cache" npx --no-install playwright test "$@"; code=$?; bash "$session" track "$dir" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$run_dir" "$spec" --output "$dir/e2e" --reporter=line >"$dir/playwright.log" 2>&1 & runner_pid=$!
+BASE_URL="$url" "$BASH" -c 'session="$1"; dir="$2"; run="$3"; "$BASH" "$session" track "$dir" "$$" || exit; [ -d "$run" ] && [ ! -e "$run/cancel" ] || exit 143; shift 3; TMPDIR="$run" TEMP="$run" TMP="$run" npm_config_cache="$run/npm-cache" npx --no-install playwright test "$@"; code=$?; "$BASH" "$session" track "$dir" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$run_dir" "$spec" --output "$dir/e2e" --reporter=line >"$dir/playwright.log" 2>&1 & runner_pid=$!
 code=0; wait "$runner_pid" 2>/dev/null || code=$?
 if ! cleanup; then printf 'E2E FAIL: process cleanup failed; session retained at %s\nRESULT FAIL\n' "$dir"; exit 1; fi
 server_pid= runner_pid=

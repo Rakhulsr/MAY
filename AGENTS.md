@@ -43,7 +43,7 @@ Maintain one first-party copy of each skill. Change canonical guidance rather th
 
 ## Tests and review
 
-Repository tests require Node 26+. On Windows, use Git Bash, not WSL Bash:
+Repository tests require Node 26+. On Windows, npm scripts and tests run Git Bash, located from `git --exec-path`, not a bare `bash` that may be WSL; set `MAY_BASH` to override the Bash executable:
 
 ```bash
 npm test

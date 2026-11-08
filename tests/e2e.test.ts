@@ -6,9 +6,8 @@ import { createServer } from "node:net";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
-import { tempDir } from "./helpers.ts";
+import { bash, tempDir } from "./helpers.ts";
 
-const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
 const scripts = fileURLToPath(new URL("../skills/may/scripts/", import.meta.url)).replaceAll("\\", "/");
 const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
 

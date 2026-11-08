@@ -4,9 +4,8 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
-import { git, gitRepo, tempDir } from "./helpers.ts";
+import { bash, git, gitRepo, tempDir } from "./helpers.ts";
 
-const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
 const script = fileURLToPath(new URL("../skills/may/scripts/may-verify.sh", import.meta.url)).replaceAll("\\", "/");
 
 function repo(t: TestContext) {

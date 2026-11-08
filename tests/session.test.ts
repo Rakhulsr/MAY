@@ -4,8 +4,7 @@ import { existsSync, mkdirSync, readFileSync, symlinkSync, utimesSync, writeFile
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { tempDir } from "./helpers.ts";
-const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
+import { bash, tempDir } from "./helpers.ts";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const script = "skills/may/scripts/may-session.sh";
 const run = (tmp: string, ...args: string[]) => spawnSync(bash, [script, ...args], { cwd: root, encoding: "utf8", timeout: 15000, env: { ...process.env, TMPDIR: tmp } });

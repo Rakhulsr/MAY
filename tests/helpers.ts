@@ -3,6 +3,9 @@ import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { TestContext } from "node:test";
+import { resolveBash } from "../scripts/bash.ts";
+
+export const bash = resolveBash();
 
 export function tempDir(t: TestContext, prefix = "may-test-") {
 	const dir = realpathSync.native(mkdtempSync(join(tmpdir(), prefix)));

@@ -4,14 +4,19 @@ import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
-import { git, tempDir } from "./helpers.ts";
+import { bash, git, tempDir } from "./helpers.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-// WSL's bash.exe may come first on PATH on Windows, so prefer Git for Windows.
-const bash = process.env.MAY_BASH ?? (["C:/Program Files/Git/bin/bash.exe"].find(existsSync) || "bash");
-
 const run = (cwd: string, script: string, ...args: string[]) => spawnSync(bash, [join(cwd, script), ...args], { cwd, encoding: "utf8", timeout: 60000 });
+
+test("the npm script launcher runs Git Bash rather than WSL and keeps the exit code", () => {
+	const env = { ...process.env };
+	delete env.MAY_BASH;
+	const out = spawnSync(process.execPath, ["scripts/bash.ts", "-c", "uname -s; exit 7"], { cwd: root, env, encoding: "utf8", timeout: 30000 });
+	assert.equal(out.status, 7, out.stdout + out.stderr);
+	if (process.platform === "win32") assert.match(out.stdout, /^(MINGW|MSYS|CYGWIN)/, out.stdout + out.stderr);
+});
 
 /** A disposable copy of the files that would be pushed, as its own Git repo. */
 function copy(t: TestContext): string {

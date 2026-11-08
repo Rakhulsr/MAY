@@ -14,7 +14,7 @@ for removed in src .pi hooks; do
 	[ ! -e "$removed" ] || fail "removed engine directory exists: $removed"
 done
 
-"$root/scripts/bump-version.sh" --check >/dev/null || fail "manifest versions differ"
+"$BASH" "$root/scripts/bump-version.sh" --check >/dev/null || fail "manifest versions differ"
 
 node --input-type=module - <<'NODE' || failed=1
 import { existsSync, readdirSync, readFileSync } from "node:fs";

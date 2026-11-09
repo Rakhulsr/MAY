@@ -19,7 +19,7 @@ The agent should turn the request into a scoped plan using the [orchestration co
 These are illustrative chat lines, not observed worker runs or acceptance evidence:
 
 ```text
-Mode: Direct | Workers: 0 | Review: self-review (not independent)
+Mode: Direct | Tier: S | Workers: 0 | Review: self-review (not independent)
 Reason: one local helper repair, unchanged interface, focused regression.
 Ready: accepted repair scope; T1-T3 cover AC1; no material blocker.
 Review: candidate C1 (current source/test snapshot, including uncommitted files);
@@ -31,7 +31,7 @@ report actual output and missing evidence, not an assumed PASS.
 A response-contract change consumed by multiple UI surfaces needs a different assessment: explain the contract/regression risk, serialize shared-file writers, and justify independent review. Reading Backend, Frontend, PM, or Tech Lead profiles inline does not start those workers.
 
 ```text
-Mode: Orchestrated | Planned: Backend, Frontend, review, QA |
+Mode: Orchestrated | Tier: L | Planned: Backend, Frontend, reviewer |
 Started: 0 | Completed: 0 | Review: pending
 ```
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output]\n' >&2; exit 2; }
+usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output] [--log-dir existing-directory]\n' >&2; exit 2; }
 ids=() commands=() owners=() statuses=() codes=()
 seconds=600
 show_output=0
+log_dir=
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --check)
@@ -14,10 +15,20 @@ while [ "$#" -gt 0 ]; do
    ids+=("$id"); commands+=("$cmd"); shift 2 ;;
   --timeout) [ "$#" -ge 2 ] && [[ "$2" =~ ^[1-9][0-9]*$ ]] || usage; seconds="$2"; shift 2 ;;
   --show-output) show_output=1; shift ;;
+  --log-dir) [ "$#" -ge 2 ] && [ -d "$2" ] || usage; log_dir="$2"; [ "$log_dir" = / ] || log_dir="${log_dir%/}"; shift 2 ;;
   *) usage ;;
  esac
 done
 [ "${#ids[@]}" -gt 0 ] || usage
+if [ -n "$log_dir" ]; then
+ # Log names must not collide on case-insensitive filesystems.
+ for ((i=0; i<${#ids[@]}; i++)); do
+  for ((j=0; j<i; j++)); do
+   [ "$(printf %s "${ids[$i]}" | tr A-Z a-z)" != "$(printf %s "${ids[$j]}" | tr A-Z a-z)" ] || usage
+  done
+ done
+fi
+copied=()
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 session="$here/may-session.sh"
 work="$("$BASH" "$session" start)"
@@ -120,6 +131,18 @@ for ((i=0; i<${#ids[@]}; i++)); do
  owner="${owners[$i]}"; status="${statuses[$owner]}"
  if [ "$initial" != "$final" ] && [ "$status" != TRIVIAL ] && [ "$status" != TIMEOUT ]; then status=CHANGED; fi
  printf '%s  %s  exit=%s  %s\n' "${ids[$i]}" "$status" "${codes[$owner]}" "${commands[$i]}"
+ if [ -n "$log_dir" ] && [ -f "$work/$owner.log" ]; then
+  # Logs are copied after the final fingerprint, so they cannot turn results into CHANGED.
+  if [ "$owner" -eq "$i" ]; then
+   copied[$i]=0
+   cp "$work/$owner.log" "$log_dir/${ids[$i]}.log" && copied[$i]=1
+  fi
+  if [ "${copied[$owner]}" -eq 1 ]; then
+   printf 'LOG %s %s\n' "${ids[$i]}" "$log_dir/${ids[$owner]}.log"
+  else
+   printf 'LOG %s copy failed\n' "${ids[$i]}"
+  fi
+ fi
  if [ "$status" = PASS ]; then passed=$((passed+1)); fi
  if [ -f "$work/$owner.log" ] && { [ "$status" != PASS ] || [ "$show_output" -eq 1 ]; }; then
   printf '%s\n' "--- ${ids[$i]} output tail"; tail -n 40 "$work/$owner.log"

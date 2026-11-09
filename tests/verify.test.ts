@@ -56,6 +56,28 @@ test("successful check output is available only when explicitly requested", (t) 
 	assert.match(empty.stdout, /no tests ran/);
 });
 
+test("--log-dir keeps full check output without changing the result table", (t) => {
+	const dir = repo(t);
+	const logs = tempDir(t, "may-logs-");
+	writeFileSync(join(dir, "long.cjs"), "for (let i = 1; i <= 60; i++) console.log('line ' + i); console.log('# tests 1');\n");
+	const checks = ["AC1=node long.cjs", "AC2=node bug.cjs", "AC3=node long.cjs"];
+	const plain = run(dir, checks);
+	const logged = run(dir, checks, ["--log-dir", logs]);
+	assert.equal(logged.status, plain.status);
+	assert.equal(logged.stdout.replace(/^LOG .*\n/gm, ""), plain.stdout);
+	const ac1 = `${logs}/AC1.log`;
+	assert.ok(logged.stdout.includes(`LOG AC1 ${ac1}\n`), logged.stdout);
+	assert.match(logged.stdout, /^LOG AC3 .*AC1\.log$/m, "shared command points at the owner log");
+	assert.match(readFileSync(join(logs, "AC1.log"), "utf8"), /^line 1\n[\s\S]*line 60\n/);
+	assert.ok(existsSync(join(logs, "AC2.log")));
+	assert.equal(existsSync(join(logs, "AC3.log")), false);
+	assert.equal(run(dir, checks, ["--log-dir", join(logs, "missing")]).status, 2);
+	assert.equal(run(dir, ["ac1=node long.cjs", "AC1=node bug.cjs"], ["--log-dir", logs]).status, 2, "IDs differing only by case would share a log file");
+	assert.equal(run(dir, ["ac1=node long.cjs", "AC1=node long.cjs"]).status, 0, "case-distinct IDs stay valid without --log-dir");
+	assert.match(run(dir, ["AC1=node long.cjs"], ["--log-dir", `${logs}/`]).stdout, new RegExp(`^LOG AC1 ${logs.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&")}/AC1\\.log$`, "m"));
+	assert.equal(run(dir, checks, ["--log-dir"]).status, 2);
+});
+
 test("all zero-test output forms are NO_TESTS", (t) => {
 	const dir = repo(t);
 	const patterns = ["ℹ tests 0", "# tests 0", "ℹ pass 0", "# pass 0", "No Tests Found", "no tests ran", "no test files", "0 passing", "ran 0 tests", "tests: 0 total"];

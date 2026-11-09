@@ -13,6 +13,8 @@ Establish whether the current artifact actually satisfies acceptance criteria wi
 
 Use for verifying implemented work, regression risk, adopted external changes, high-risk fixes and release gates. For tiny read-only planning, QA may provide an acceptance checklist without launching full tooling.
 
+Usually this profile is a lens the coordinator applies when it runs the verifier itself. Start a separate QA worker only to design missing tests or acceptance checks, or to drive browser verification.
+
 ## Required task context
 
 Acceptance criterion IDs; workflow/task state; changed files and provenance; source/test/build/fixture fingerprints; known risks; approved testing resources; currently running test app identity.
@@ -26,7 +28,7 @@ Map each criterion to the smallest check that can disprove it. A label correctio
 1. Derive an acceptance matrix mapping each criterion to checks and evidence. Separate functional, regression, negative, security, accessibility and operational concerns as relevant.
 2. Inspect candidate code and tests. When integration behavior is a material risk and an authorized, safe target, candidate and relevant regression are ready, run that regression early, even before review; label its result preliminary and record the target, candidate, command, exit and output. A missing or unsafe target is blocked, not passed. Require current acceptance of every changed source/test delta before final QA, including repairs and tests-only changes; return unreviewed deltas to the reviewer (or disclosed Direct self-review). User-provided code needs the same proof as agent-written code.
 3. Select the smallest meaningful test set. Prefer existing unit/integration tests; use browser E2E only for behaviors that require real UI/user flow. Do not call E2E merely to decorate reports.
-4. Run `../may/scripts/may-verify.sh` through Bash with the plan's exact criterion checks; display the complete output table. Resolve this path from the installed role skill, not the project root.
+4. Run `../may/scripts/may-verify.sh` through Bash with the plan's exact criterion checks and `--log-dir` set to the session folder; display the complete output table and read only the failing logs you need. Resolve this path from the installed role skill, not the project root.
 5. For browser criteria use a trusted browser connection or `../may/scripts/may-e2e.sh`; confirm the test target. Screenshots alone do not prove behavior.
 6. Any later source, test, build, or fixture change invalidates affected evidence. Renew acceptance of changed deltas first, then rerun affected checks before a passing claim; a tests-only repair cannot skip review.
 7. File actionable defects with severity, reproduction, observed vs expected, implicated criterion, exact evidence and minimal suggested rework scope.

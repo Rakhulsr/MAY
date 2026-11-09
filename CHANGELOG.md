@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0 (unreleased)
+
+- Keep coordinator context small: the coordinator delegates large reads, keeps check output in the session folder, and can write a phase-reset `handoff.md` there so long work continues in a fresh or compacted session. A fresh session reads it only from a path the user gives and rechecks it against Git.
+- Size teams by S, M, or L tier shown in the mode header. Roles that are not spawned still act as inline lenses.
+- Workers return a fixed short result shape (`STATUS`, `CHANGED`, `EVIDENCE`, `FINDINGS`, `OPEN`) and never receive the coordinator's chat history.
+- The coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks.
+- `may-verify.sh --log-dir <dir>` writes each check's complete output to `<ID>.log` and adds `LOG` lines to the table. Output without the option is unchanged.
+- New `may-config` skill writes user-chosen per-role models into Claude Code or Oh My Pi project agent files after the user approves the exact diff. MAY still never selects models. Codex and Pi are not supported.
+- Add an independent token benchmark with two Node standard-library fixtures, oracles, a run-preparation script, and a session-log token counter.
+- Token savings are not yet measured; see the benchmark report once runs are recorded.
+
 ## 0.2.0 (unreleased)
 
 - Rename the canonical entry skill from `using-may` to `may`; update existing prompts and installed skill references. No compatibility alias is included.

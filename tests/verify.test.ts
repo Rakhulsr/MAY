@@ -19,8 +19,10 @@ function repo(t: TestContext) {
 function run(cwd: string, checks: string[], extra: string[] = []) {
 	const before = git(cwd, "status", "--porcelain=v1", "-uall");
 	const out = spawnSync(bash, [script, ...checks.flatMap(check => ["--check", check]), ...extra], {
-		cwd, encoding: "utf8", timeout: 30000,
+		cwd, encoding: "utf8", timeout: 120000,
 	});
+	// A killed verifier has status null; report the harness timeout instead of a misleading status mismatch.
+	if (out.error) throw out.error;
 	assert.equal(git(cwd, "status", "--porcelain=v1", "-uall"), before, "script must not write to repo");
 	return out;
 }

@@ -8,8 +8,7 @@
 - The coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks.
 - `may-verify.sh --log-dir <dir>` writes each check's complete output to `<ID>.log` and adds `LOG` lines to the table. Output without the option is unchanged.
 - New `may-config` skill writes user-chosen per-role models into Claude Code or Oh My Pi project agent files after the user approves the exact diff. MAY still never selects models. Codex and Pi are not supported.
-- Add an independent token benchmark with two Node standard-library fixtures, oracles, a run-preparation script, and a session-log token counter.
-- Token savings are not yet measured; see the benchmark report once runs are recorded.
+- Token savings are not measured in this release.
 
 ## 0.2.0 (unreleased)
 

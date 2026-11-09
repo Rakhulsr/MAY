@@ -1,0 +1,6 @@
+{
+  "name": "benchmark-notes-fixture",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test", "start": "node start.js" }
+}

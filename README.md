@@ -24,7 +24,25 @@ Spawning a subagent answers who can do a task. MAY adds a shared contract for wh
 | Acceptance evidence | The caller decides what results establish completion | Exact criterion commands, current-candidate evidence, explicit failures and blocked checks |
 | Temporary work | Process and artifact handling depend on the tools and caller | Marked OS-temp sessions, retained failure diagnostics, exact-session cleanup |
 
-A native workflow can implement these same patterns. MAY packages the conventions; advisory skills do not automatically enforce them. There are no published comparative token, time, or quality benchmarks here, so this table compares responsibilities, not measured superiority.
+A native workflow can implement these same patterns. MAY packages the conventions; advisory skills do not automatically enforce them.
+
+### Exploratory benchmark
+
+One local Windows session-safety task compared MAY 0.2.0 with OMP Vibe without the MAY workflow. Both candidates passed independent review and final QA. The numbers below are individual worker durations, not end-to-end times.
+
+| Measure | MAY | Vibe |
+|---|---:|---:|
+| Implementer worker (seconds) | 124 | 278 |
+| Reviewer worker (seconds) | 62 | 75 |
+| QA worker (seconds) | 408 | 327 |
+| Session tests passed / total | 13 / 13 | 13 / 13 |
+| Full suite passed / total | 57 / 57 | 57 / 57 |
+
+Both repository checks exited 0. MAY used its verifier; Vibe ran checks directly, so their QA timings are not equivalent speed measurements. The base model reported for both paths was `openai-codex/gpt-6.1-terra`; Vibe used xhigh for implementation and review and medium for QA, while MAY reasoning levels were not recorded. Cache, run order and coordinator context can affect results. One task and one run per path do not establish superiority. Total tokens, cost and end-to-end time were unavailable.
+
+See the [detailed report](tests/benchmark/benchmark-0.2.0.md).
+
+A second, token-focused comparison of MAY 0.2.0 and 0.3.0 on Claude Code found no measurable difference: in six single runs, all passing their oracles, 0.3.0 run totals ranged from 4% lower to 24% higher. See the [0.3.0 token report](tests/benchmark/benchmark-0.3.0.md).
 
 ## Install
 

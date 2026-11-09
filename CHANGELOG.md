@@ -9,7 +9,7 @@
 - The coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks.
 - `may-verify.sh --log-dir <dir>` writes each check's complete output to `<ID>.log` and adds `LOG` lines to the table. Output without the option is unchanged.
 - New `may-config` skill writes user-chosen per-role models into Claude Code, Oh My Pi, Codex, or Pi (pi-subagents extension) project agent files after the user approves the exact diff. MAY still never selects models. Dispatch to a project `may-<role>` agent used its configured model on Claude Code 2.1.319, OMP 18.18.3, and Pi 1.5.0 with pi-subagents 0.87.0 (one probe each; the OMP and Pi probe models were rejected by their providers for credentials, after model resolution). On Codex 0.163.0 `exec`, the spawn tool offered no custom-agent selector; model application there is unverified.
-- Token savings are not measured in this release.
+- Add an independent token benchmark: two Node standard-library fixtures, oracles, a run-preparation script and a session-log token counter. Six single Claude Code runs comparing 0.2.0 and 0.3.0 found no measurable token difference; see `tests/benchmark/benchmark-0.3.0.md`.
 
 ## 0.2.0 (unreleased)
 

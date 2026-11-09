@@ -11,10 +11,10 @@ const bench = join(import.meta.dirname, "benchmark");
 const oracle = (name: string, dir: string) =>
 	spawnSync(process.execPath, [join(bench, "oracles", `${name}.mjs`), dir], { encoding: "utf8", timeout: 30000 });
 
-for (const name of ["orders", "notes"]) {
+for (const name of ["orders", "notes", "notes-l"]) {
 	test(`${name} oracle fails on the fixture and passes on the reference`, (t) => {
 		const dir = join(tempDir(t), name);
-		cpSync(join(bench, "fixtures", name), dir, { recursive: true });
+		cpSync(join(bench, "fixtures", name.replace(/-l$/, "")), dir, { recursive: true });
 		const fixtureTests = spawnSync(process.execPath, ["--test"], { cwd: dir, encoding: "utf8", timeout: 30000 });
 		assert.equal(fixtureTests.status, 0, fixtureTests.stdout);
 		const red = oracle(name, dir);
@@ -58,6 +58,8 @@ test("count-tokens dedupes Claude blocks and adds OMP workers", (t) => {
 	assert.equal(run.coordinator.total, 116 + 316);
 	assert.equal(run.workers.length, 1);
 	assert.equal(run.total, 116 + 316 + 116);
+	assert.equal(run.coordinator.weighted, Math.round(2 + 0.1 * 400 + 1.25 * 20 + 5 * 10));
+	assert.equal(run.weighted, run.coordinator.weighted + run.workers[0].weighted);
 
 	const omp = join(dir, "omp.jsonl");
 	const ompLine = (usage: object) => JSON.stringify({ type: "message", message: { role: "assistant", usage } });

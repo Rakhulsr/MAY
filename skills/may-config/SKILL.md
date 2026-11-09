@@ -1,6 +1,6 @@
 ---
 name: may-config
-description: Use when the user wants MAY roles to run on specific models, asks which model each MAY worker uses, or wants to change per-role model settings for Claude Code or Oh My Pi.
+description: Use when the user wants MAY roles to run on specific models, asks which model each MAY worker uses, or wants to change per-role model settings for Claude Code, Oh My Pi, Codex, or Pi with the pi-subagents extension.
 ---
 
 # MAY role model configuration
@@ -13,8 +13,10 @@ Map MAY roles to models the user chooses, through the harness's own project-leve
 |---|---|---|
 | Claude Code | `.claude/agents/may-<role>.md` | Frontmatter `model:`, a value the installed Claude Code accepts, such as an alias or `inherit` |
 | Oh My Pi | `.omp/agents/may-<role>.md` | Frontmatter `model:` list of model IDs or `@role` aliases from the user's `modelRoles`; optional `thinkingLevel:` |
+| Codex | `.codex/agents/may-<role>.toml` | TOML `model`, optional `model_reasoning_effort`; required `name`, `description`, `developer_instructions` |
+| Pi with pi-subagents | `.pi/agents/may-<role>.md` | Frontmatter `model:` (optional `:level` suffix) and optional `thinking:` |
 
-Observed on Claude Code's `Agent` tool and OMP 18.18.2 bundled agents. Formats change between versions: before writing, read the installed harness's current documentation or help, and an existing agent file of the same harness if one exists. If the format cannot be confirmed, stop and report it. Codex and Pi are not supported yet; say so instead of guessing.
+Observed dispatch to a project `may-<role>` agent with its configured model on Claude Code 2.1.319, OMP 18.18.3, and Pi 1.5.0 with pi-subagents 0.87.0. The Codex 0.163.0 format comes from its documentation; in a `codex exec` run the spawn tool offered no custom-agent selector, so the model was not applied. Codex loads project `.codex/` layers only for a trusted project. Pi core has no subagent tool: without an installed subagent extension that reads project agent files, Pi is not supported, and MAY does not install one. Formats change between versions: before writing, read the installed harness's current documentation or help, and an existing agent file of the same harness if one exists. If the format cannot be confirmed, stop and report it instead of guessing.
 
 ## Steps
 
@@ -38,5 +40,7 @@ model: <user-chosen value>
 
 Load the MAY `may-backend` role skill (a plugin may list it with a namespace, such as `may:may-backend`) and the shared MAY role contract, then perform only the assigned task and return the contract's result shape.
 ```
+
+For Codex, put the same instruction in `developer_instructions` and keep the TOML keys the documentation lists.
 
 The coordinator dispatches to `may-<role>` when such an agent exists, per the harness mapping; otherwise it uses the native default. Configured models never change the tier, review, or verification rules.

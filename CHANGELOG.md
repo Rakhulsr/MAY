@@ -4,10 +4,11 @@
 
 - Keep coordinator context small: the coordinator delegates large reads, keeps check output in the session folder, and can write a phase-reset `handoff.md` there so long work continues in a fresh or compacted session. A fresh session reads it only from a path the user gives and rechecks it against Git.
 - Size teams by S, M, or L tier shown in the mode header. Roles that are not spawned still act as inline lenses.
+- When the user asks, the phase-reset handoff can live in a Git-ignored project `may-artifacts/handoff.md` to survive the 24-hour temp sweep; it is never committed and is deleted when the work ends.
 - Workers return a fixed short result shape (`STATUS`, `CHANGED`, `EVIDENCE`, `FINDINGS`, `OPEN`) and never receive the coordinator's chat history.
 - The coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks.
 - `may-verify.sh --log-dir <dir>` writes each check's complete output to `<ID>.log` and adds `LOG` lines to the table. Output without the option is unchanged.
-- New `may-config` skill writes user-chosen per-role models into Claude Code or Oh My Pi project agent files after the user approves the exact diff. MAY still never selects models. Codex and Pi are not supported.
+- New `may-config` skill writes user-chosen per-role models into Claude Code, Oh My Pi, Codex, or Pi (pi-subagents extension) project agent files after the user approves the exact diff. MAY still never selects models. Dispatch to a project `may-<role>` agent used its configured model on Claude Code 2.1.319, OMP 18.18.3, and Pi 1.5.0 with pi-subagents 0.87.0 (one probe each; the OMP and Pi probe models were rejected by their providers for credentials, after model resolution). On Codex 0.163.0 `exec`, the spawn tool offered no custom-agent selector; model application there is unverified.
 - Token savings are not measured in this release.
 
 ## 0.2.0 (unreleased)

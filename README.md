@@ -122,7 +122,7 @@ Roles are responsibility profiles, not mandatory processes. They give advice gro
 | [may-qa](skills/may-qa/SKILL.md) | Acceptance checks, regression coverage, and current-artifact evidence |
 | [may-security](skills/may-security/SKILL.md) | Threat modeling, auth, secrets, trust boundaries, and review |
 | [may-devops](skills/may-devops/SKILL.md) | Development environments, builds, CI, and deployment risk |
-| [may-config](skills/may-config/SKILL.md) | Per-role model choices in Claude Code or Oh My Pi project agent files, written only after approval |
+| [may-config](skills/may-config/SKILL.md) | Per-role model choices in Claude Code, Oh My Pi, Codex, or Pi (pi-subagents) project agent files, written only after approval |
 
 ## Requirements and limits
 

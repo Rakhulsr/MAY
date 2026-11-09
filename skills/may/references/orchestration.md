@@ -83,10 +83,12 @@ Tasks: ID | role | files | status
 Criteria: ID | exact check command
 Candidate: HEAD and dirty paths
 Evidence: verify table and log paths, status
-Open: findings, blockers, next action`
+Open: findings, blockers, next action
 ```
 
 When a handoff's `Candidate` differs from current Git status, report the difference and trust the code.
+
+**Persistent handoff (opt-in):** when work must outlive the 24-hour sweep, and only when the user asks for it, write the same `handoff.md` to `may-artifacts/handoff.md` in the project instead. Before writing, confirm with `git check-ignore -q may-artifacts/handoff.md` that Git ignores it; if not, ask the user to approve adding `may-artifacts/` to `.git/info/exclude` or `.gitignore`. Never stage or commit it. The same rules apply: a fresh session reads it only from a path the user gives and rechecks it against Git. Stop the session normally, since the handoff no longer lives in it. Overwrite the file at each phase reset and delete it when the work ends or the user abandons it.
 
 ## Execute and review
 

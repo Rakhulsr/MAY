@@ -5,7 +5,7 @@ This guide governs agents developing MAY itself. User-facing workflow behavior b
 ## Product boundaries
 
 - MAY is a light plugin: skills, small Bash scripts, and native harness commands or hooks only when a concrete need justifies them. Do not add an engine, database, event journal, persistent workflow state, background service, or cross-session resume.
-- Agents read relevant code themselves. MAY does not store or inject project context. Each new session starts from actual code and Git status. The one exception is a phase-reset `handoff.md` inside an owned OS-temp session folder: a fresh session may read it only from a path the user gives, and must recheck it against code and Git.
+- Agents read relevant code themselves. MAY does not store or inject project context. Each new session starts from actual code and Git status. The one exception is a phase-reset `handoff.md` inside an owned OS-temp session folder, or, only when the user asks, in a Git-ignored project `may-artifacts/` folder: a fresh session may read it only from a path the user gives, and must recheck it against code and Git.
 - The harness owns permissions, tools, sessions, configured models/accounts, and native delegation defaults. Keep those settings intact; advisory skills do not enforce compliance or provide a sandbox.
 - MAY never selects models. `may-config` writes per-role model choices into the harness's native project agent files only after the user approves the exact diff, never into user-global configuration.
 - Plans, notes, and reports stay in chat or an owned OS-temp session folder, never in the project unless the user requests files. Existing decisions and accepted plans remain useful context, not durable MAY workflow state.

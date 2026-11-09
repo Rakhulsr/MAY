@@ -1,4 +1,4 @@
-// Usage: node prepare-run.mjs <orders|notes>
+// Usage: node prepare-run.mjs <orders|notes|notes-l>
 // Copies a fixture into a new marked MAY session as a disposable Git project.
 import { execFileSync } from 'node:child_process';
 import { cpSync, existsSync } from 'node:fs';
@@ -8,9 +8,10 @@ import { resolveBash } from '../../scripts/bash.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const name = process.argv[2];
-const fixture = join(here, 'fixtures', name ?? '');
-if (!name || !/^[a-z]+$/.test(name) || !existsSync(fixture)) {
-  console.error('Usage: node prepare-run.mjs <orders|notes>');
+// B-L reuses the notes fixture with a larger task and its own oracle.
+const fixture = join(here, 'fixtures', (name ?? '').replace(/-l$/, ''));
+if (!name || !/^[a-z]+(-l)?$/.test(name) || !existsSync(fixture) || !existsSync(join(here, 'oracles', `${name}.mjs`))) {
+  console.error('Usage: node prepare-run.mjs <orders|notes|notes-l>');
   process.exit(2);
 }
 const sessionScript = resolve(here, '../../skills/may/scripts/may-session.sh');

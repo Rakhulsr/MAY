@@ -32,6 +32,8 @@ export function countFile(file) {
     sum.maxContext = Math.max(sum.maxContext, input + cacheRead + cacheWrite);
   }
   sum.total = sum.input + sum.cacheRead + sum.cacheWrite + sum.output;
+  // Input-equivalent tokens at Anthropic's price ratios: cache read 0.1x, 5-minute cache write 1.25x, output 5x.
+  sum.weighted = Math.round(sum.input + 0.1 * sum.cacheRead + 1.25 * sum.cacheWrite + 5 * sum.output);
   return sum;
 }
 
@@ -43,7 +45,8 @@ export function countRun(coordinatorFile) {
   const workers = existsSync(companion) ? walk(companion).map((file) => ({ file: basename(file), ...countFile(file) })) : [];
   const coordinator = countFile(coordinatorFile);
   const total = coordinator.total + workers.reduce((n, w) => n + w.total, 0);
-  return { file: basename(coordinatorFile), coordinator, workers, total };
+  const weighted = coordinator.weighted + workers.reduce((n, w) => n + w.weighted, 0);
+  return { file: basename(coordinatorFile), coordinator, workers, total, weighted };
 }
 
 if (import.meta.main) {

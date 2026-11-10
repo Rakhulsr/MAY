@@ -22,7 +22,7 @@ An area is one layer or module the change touches, such as a data store, HTTP AP
 
 | Tier | Signals | Team |
 |---|---|---|
-| L | Work the user asks to phase or too large for one review, auth or data risk across areas, or changes in several areas that touch the same files | One named implementer per area in sequence, named reviewers for the relevant risks, and a [phase reset](phase-reset.md) between phases |
+| L | Work the user asks to phase or too large for one review, auth or data risk across areas, or changes in several areas that touch the same files | One named implementer per area in sequence, or in [parallel](#parallel-writers) when areas are isolated, named reviewers for the relevant risks, and a [phase reset](phase-reset.md) between phases |
 | M | Two or more areas, any contract change, auth or data risk within one area, or other moderate risk that warrants independent review | One named implementer, the role of the area that holds the contract or most of the change, with the other areas' roles as inline lenses; and one named read-only reviewer: `may-tech-lead` by default, `may-security` for auth or sensitive data, `may-ui-ux` for user flows |
 | S | Everything else: one area, no contract change, low risk | No workers. The coordinator implements inline as the relevant role, then self-reviews with the `may-tech-lead` lens and discloses that review is not independent |
 
@@ -75,7 +75,7 @@ Only the coordinator dispatches role workers. Dispatch each worker by its role n
 2. The agent MAY ships for that role, as named in the harness mapping.
 3. The native default worker, with a brief that starts `You are may-<role>` and tells it to load the `may-<role>` skill. Disclose this fallback in the team header.
 
-Dispatch into a fresh context and keep one writer at a time. Include the objective, assigned task, exact files, decisions, prior results, and required invocation inputs in the brief. Carry every applicable user criterion without losing exact contract details: literal output shapes, names, values, errors, and edge cases. Give implementers and reviewers the original relevant wording or a faithfully complete extract, with a resolvable source when available; the reviewer must compare the candidate against that wording, not only an implementer's summary. Never forward the coordinator's chat history or paste repository file contents the worker can read itself; give paths and the relevant decisions instead. Reuse an active native execution/team mode such as Vibe; do not add a second agent manager, delegation package, or role-starting runner.
+Dispatch into a fresh context and keep one writer per checkout: one at a time, except [parallel writers](#parallel-writers). Include the objective, assigned task, exact files, decisions, prior results, the session folder path, and required invocation inputs in the brief. Carry every applicable user criterion without losing exact contract details: literal output shapes, names, values, errors, and edge cases. Give implementers and reviewers the original relevant wording or a faithfully complete extract, with a resolvable source when available; the reviewer must compare the candidate against that wording, not only an implementer's summary. Never forward the coordinator's chat history or paste repository file contents the worker can read itself; give paths and the relevant decisions instead. Reuse an active native execution/team mode such as Vibe; do not add a second agent manager, delegation package, or role-starting runner.
 
 If dispatch fails or is denied, show the blocked action and actual worker outcome. Keep configured defaults and permissions intact; ask for the needed owner decision rather than silently switching tier or model or repeating a denied action. An explicitly approved recovery is limited to its authorized scope and must use a route the harness actually permits. If delegation is absent, disclose sequential execution and non-independent review before proceeding with that limitation.
 
@@ -86,6 +86,23 @@ Record each check's exact command, exit and observed output, plus the minimal re
 When a material integration risk has a ready candidate and relevant regression, run an early diagnostic before review when possible. Identify the candidate, actual target and side effects; require an authorized command and disposable or explicitly approved data and integrations. Localhost alone is not proof of safety. If identity, scope or approval is unknown, report blocked. Record command, target reference, exit and observed output. Early results are preliminary and cannot substitute for review or final QA.
 
 A reviewer is read-only and assesses **every changed source and test delta** against the plan. Findings include ID, severity, affected criterion, evidence, and required repair. At the review boundary, state the candidate identity, reviewer, and explicit acceptance or open findings in one short line. After any repair, including a tests-only repair, return the new delta to the same reviewer and obtain renewed acceptance before final QA. Prior acceptance covers only the reviewed candidate; plan acceptance is not implementation acceptance. Tier S follows the same sequence with the disclosed `may-tech-lead` self-review. After two unsuccessful repair rounds, ask the user; resubmitting unchanged work is not repair. When the user asks for a reviewer from another harness, follow [cross-harness review](ideation-bridge.md#cross-harness-review).
+
+### Parallel writers
+
+Tier L areas may run in parallel only when all of these hold:
+
+- The areas change disjoint files, and the plan fixes the contract between them.
+- The live dispatch schema gives each worker its own checkout; see the harness mapping. MAY never creates worktrees itself or changes harness settings to get one.
+- `git status --short` is empty, because an isolated checkout starts from a commit and carries no uncommitted work. Do not commit, stash, or reset to get there; ask the user or stay sequential.
+
+Record `git rev-parse HEAD` as the base before dispatch and give each worker the base, its files, and the session folder. Workers do not commit. When a worker returns, check that its checkout's `HEAD` equals the base; a mismatch voids that result, and the area reruns sequentially in the main checkout. Integrate one checkout at a time in the main checkout. `add -N` makes new files visible to the diff, and `git apply` applies the whole patch or nothing:
+
+```bash
+git -C "$wt" add -N .
+git -C "$wt" diff --binary HEAD | git apply
+```
+
+A patch that does not apply, or that touches a file outside its area, stops integration; return that area to its implementer, sequentially in the main checkout. After integration, review covers the combined delta and final verification runs in the main checkout; evidence from inside a worktree is not final. Once a patch is applied or abandoned, remove that worktree and its branch (`git worktree remove --force "$wt"` and `git branch -D <branch>`), only the paths and branches the dispatch results named, and report any left behind.
 
 ## Verify exact criteria
 

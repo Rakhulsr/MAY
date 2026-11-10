@@ -23,7 +23,7 @@ Ground scope in existing product behavior. For an internal membership app, ask w
 
 ## Coordinator or worker
 
-When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe, with one writer and one layer of leaf workers; do not create a second manager. Tier M and L work still needs read-only review acceptance before QA, and tier S a disclosed Tech Lead self-review. When assigned a PM worker task, return requirements and criteria to the coordinator without spawning a team.
+When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe, with one writer per checkout and one layer of leaf workers; do not create a second manager. Tier M and L work still needs read-only review acceptance before QA, and tier S a disclosed Tech Lead self-review. When assigned a PM worker task, return requirements and criteria to the coordinator without spawning a team.
 
 ## Workflow
 

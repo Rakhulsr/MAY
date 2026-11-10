@@ -115,6 +115,11 @@ The agent should inspect code and Git status, reuse settled decisions, and ask o
 
 For a user-directed ideation handoff or independent critique, ask MAY to use the [manual ideation bridge](skills/may/references/ideation-bridge.md). Packets are transferred by the user; the optional structural validator needs Bash and an already-installed Node.js 18 or newer. Neither packet validation nor skill guidance enforces permissions or proves claims.
 
+When you ask for it, MAY can also hand work to another harness:
+
+- **Cross-harness review:** the coordinator sends the criteria and diff to Codex, Claude Code, Pi, or Oh My Pi running headless and read-only, and records its findings as an independent review after checking them against the code. Name the harness; the diff goes to that harness's provider. See [cross-harness review](skills/may/references/ideation-bridge.md#cross-harness-review).
+- **Visible panes:** `may-bridge.sh host` detects the terminal host (Herdr, herdr-app, zellij, tmux, WezTerm, Windows Terminal, VS Code, Zed, or none), and `may-bridge.sh open <program> [args...]` opens the other harness in a pane of that host instead of a new window. Where a host has no pane command, the coordinator runs the harness headless. See [launching another harness](skills/may/references/ideation-bridge.md#launching-another-harness).
+
 See a [real verification-step example](skills/may/references/examples.md), with its exact observed output and limits.
 
 ## Workflow
@@ -123,7 +128,17 @@ See a [real verification-step example](skills/may/references/examples.md), with 
 
 [Editable diagram source](assets/diagrams/workflow.svg)
 
-Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Tier M and L dispatch named role workers, such as `may-backend` and `may-tech-lead`, keep one writer at a time, and use a separate reviewer when delegation is available. Tier S implements inline under the relevant role lens and uses a disclosed, non-independent Tech Lead self-review. In every tier the coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks. Without delegation, tasks run sequentially with the same disclosure.
+The coordinator picks a tier from the areas the change touches (a data store, API, client, UI, or CI), checking L first:
+
+| Tier | When | Team |
+|---|---|---|
+| S | One area, no contract change, low risk | No workers; the coordinator implements inline and self-reviews with the Tech Lead lens, disclosed as not independent |
+| M | Two or more areas, a contract change, or auth or data risk in one area | One named implementer and one read-only reviewer chosen by risk (`may-tech-lead`, `may-security`, or `may-ui-ux`) |
+| L | Phased or very large work, risk across areas, or areas touching the same files | One implementer per area, named reviewers per risk, and a [phase reset](skills/may/references/phase-reset.md) between phases |
+
+Only you can move work to a smaller tier. Long work can end a phase with a `handoff.md` in the session folder, which a fresh session reads only from a path you give it and rechecks against Git.
+
+Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Tier M and L dispatch named role workers, such as `may-backend` and `may-tech-lead`, keep one writer per checkout, and use a separate reviewer when delegation is available. Tier L areas that change separate files can run as [parallel writers](skills/may/references/orchestration.md#parallel-writers) when the harness gives each worker its own checkout and the working tree is clean; the coordinator checks each checkout's base, applies one patch at a time, and reviews and verifies the combined result. Tier S implements inline under the relevant role lens and uses a disclosed, non-independent Tech Lead self-review. In every tier the coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks. Without delegation, tasks run sequentially with the same disclosure.
 
 Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
 
@@ -152,6 +167,7 @@ Each role except `may-config` also ships as a worker agent in [`agents/`](agents
 - Runtime scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows. Node is needed for MAY's repository tests, not workflow state.
 - Browser verification needs a trusted browser connection or the project's already-installed Playwright. MAY does not install browser tooling automatically. Missing capability is blocked, not a pass.
 - MAY has no database, background service, persistent workflow state, or cross-session resume. Plans and reports stay in chat or a temporary session folder, never in your project unless you request files. New sessions start from code and Git status.
+- Parallel writers need native per-worker isolation: Claude Code `isolation: "worktree"`, pi-subagents `worktree: true`, or Oh My Pi `isolated: true` after you enable `task.isolation.enabled`. Codex sub-agents share one checkout, so Codex stays with one writer. One Claude Code run is tested; Pi and Oh My Pi parallel writers are untested.
 - Workflow-tested on Claude Code 2.1.322 with `claude-opus-5-5` on Windows: one headless run each of a small repair, a feature with independent review and QA, a fail-fix-pass repair, and a forced interruption continued in a fresh session, all passing their oracles, under the user's `auto` permission mode. Other harnesses, models, and platforms are not workflow-tested.
 - Skills cannot enforce model compliance or provide isolation. See the [trust and security policy](SECURITY.md) before authorizing commands or handling sensitive data.
 

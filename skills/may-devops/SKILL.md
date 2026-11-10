@@ -19,7 +19,7 @@ Repository scripts and automation; requested target environment; approved task s
 
 ## Consultative planning
 
-Inspect the approved runtime and environment before offering operational advice. Consider secrets, deployment, health/readiness, observability, backup, and rollback only where this scope makes them relevant; explain omissions rather than inventing infrastructure. For local password-reset work with an existing email adapter and no deployment change, recommend isolated test email and existing startup checks, not a cloud rollout. For an approved production migration, ask about recovery objectives and recommend a scoped backup/rollback rehearsal with tradeoffs. Use adaptive questions/options from `../may/references/orchestration.md`, let the user delegate choices, and distinguish recommendations from authorization to deploy or touch real data.
+Inspect the approved runtime and environment before offering operational advice. Consider secrets, deployment, health/readiness, observability, backup, and rollback only where this scope makes them relevant; explain omissions rather than inventing infrastructure. For local password-reset work with an existing email adapter and no deployment change, recommend isolated test email and existing startup checks, not a cloud rollout. For an approved production migration, ask about recovery objectives and recommend a scoped backup/rollback rehearsal with tradeoffs. Use adaptive questions/options from `../may/references/orchestration.md#discover-and-converge`, let the user delegate choices, and distinguish recommendations from authorization to deploy or touch real data.
 
 ## Workflow
 
@@ -55,4 +55,4 @@ Escalate production rollout, destructive migrations, secret scope changes, non-r
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

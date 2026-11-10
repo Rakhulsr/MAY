@@ -19,8 +19,10 @@ function repo(t: TestContext) {
 function run(cwd: string, checks: string[], extra: string[] = []) {
 	const before = git(cwd, "status", "--porcelain=v1", "-uall");
 	const out = spawnSync(bash, [script, ...checks.flatMap(check => ["--check", check]), ...extra], {
-		cwd, encoding: "utf8", timeout: 30000,
+		cwd, encoding: "utf8", timeout: 120000,
 	});
+	// A killed verifier has status null; report the harness timeout instead of a misleading status mismatch.
+	if (out.error) throw out.error;
 	assert.equal(git(cwd, "status", "--porcelain=v1", "-uall"), before, "script must not write to repo");
 	return out;
 }
@@ -54,6 +56,28 @@ test("successful check output is available only when explicitly requested", (t) 
 	const empty = run(dir, ["AC=node evidence.cjs"]);
 	assert.equal(empty.status, 1);
 	assert.match(empty.stdout, /no tests ran/);
+});
+
+test("--log-dir keeps full check output without changing the result table", (t) => {
+	const dir = repo(t);
+	const logs = tempDir(t, "may-logs-");
+	writeFileSync(join(dir, "long.cjs"), "for (let i = 1; i <= 60; i++) console.log('line ' + i); console.log('# tests 1');\n");
+	const checks = ["AC1=node long.cjs", "AC2=node bug.cjs", "AC3=node long.cjs"];
+	const plain = run(dir, checks);
+	const logged = run(dir, checks, ["--log-dir", logs]);
+	assert.equal(logged.status, plain.status);
+	assert.equal(logged.stdout.replace(/^LOG .*\n/gm, ""), plain.stdout);
+	const ac1 = `${logs}/AC1.log`;
+	assert.ok(logged.stdout.includes(`LOG AC1 ${ac1}\n`), logged.stdout);
+	assert.match(logged.stdout, /^LOG AC3 .*AC1\.log$/m, "shared command points at the owner log");
+	assert.match(readFileSync(join(logs, "AC1.log"), "utf8"), /^line 1\n[\s\S]*line 60\n/);
+	assert.ok(existsSync(join(logs, "AC2.log")));
+	assert.equal(existsSync(join(logs, "AC3.log")), false);
+	assert.equal(run(dir, checks, ["--log-dir", join(logs, "missing")]).status, 2);
+	assert.equal(run(dir, ["ac1=node long.cjs", "AC1=node bug.cjs"], ["--log-dir", logs]).status, 2, "IDs differing only by case would share a log file");
+	assert.equal(run(dir, ["ac1=node long.cjs", "AC1=node long.cjs"]).status, 0, "case-distinct IDs stay valid without --log-dir");
+	assert.match(run(dir, ["AC1=node long.cjs"], ["--log-dir", `${logs}/`]).stdout, new RegExp(`^LOG AC1 ${logs.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&")}/AC1\\.log$`, "m"));
+	assert.equal(run(dir, checks, ["--log-dir"]).status, 2);
 });
 
 test("all zero-test output forms are NO_TESTS", (t) => {
@@ -269,4 +293,38 @@ test("a parent deadline stays bounded when auxiliary registration runs past the 
 		});
 		assert.equal(cleanup.status, 0, cleanup.stdout + cleanup.stderr);
 	}
+});
+
+test("the check timeout starts when the check command starts, not when MAY registers it", (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may slow registration ");
+	const started = join(tmp, "check-started");
+	const delayed = join(tmp, "registration-delayed");
+	const timing = join(tmp, "timing.sh");
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	// Delay only the pre-command registration, longer than the whole --timeout budget.
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ ! -e ${quote(started.replaceAll("\\", "/"))} ] && [ ! -e ${quote(delayed.replaceAll("\\", "/"))} ]; then touch ${quote(delayed.replaceAll("\\", "/"))}; sleep 5; fi\n`);
+	writeFileSync(join(dir, "fast.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)},'started');console.log('# tests 1');`);
+	const out = spawnSync(bash, [script, "--check", "AC=node fast.cjs", "--timeout", "3"], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 60000,
+	});
+	assert.equal(existsSync(delayed), true, "the pre-command registration delay must run");
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+PASS/, out.stdout + out.stderr);
+});
+
+test("stalled initial registration is bounded independently of the check timeout", (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may stalled registration ");
+	const started = join(tmp, "registration-started").replaceAll("\\", "/");
+	const timing = join(tmp, "timing.sh");
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ ! -e ${quote(started)} ]; then touch ${quote(started)}; sleep 36; fi\n`);
+	writeFileSync(join(dir, "check.cjs"), "console.log('# tests 1');");
+	const out = spawnSync(bash, [script, "--check", "AC=node check.cjs", "--timeout", "60"], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 90000,
+	});
+	assert.equal(existsSync(started), true, "registration must begin");
+	assert.equal(out.status, 1, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+TIMEOUT/);
 });

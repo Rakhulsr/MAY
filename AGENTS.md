@@ -4,10 +4,11 @@ This guide governs agents developing MAY itself. User-facing workflow behavior b
 
 ## Product boundaries
 
-- MAY consists of skills and small Bash scripts. Preserve the skill-first design without adding an engine, database, event journal, persistent workflow state, background service, or cross-session resume.
-- Agents read relevant code themselves. MAY does not store or inject project context. Each new session starts from actual code and Git status.
+- MAY is a light plugin: skills, small Bash scripts, and native harness commands or hooks only when a concrete need justifies them. Do not add an engine, database, event journal, persistent workflow state, background service, or cross-session resume.
+- Agents read relevant code themselves. MAY does not store or inject project context. Each new session starts from actual code and Git status. The one exception is a phase-reset `handoff.md` inside an owned OS-temp session folder, or, only when the user asks, in a Git-ignored project `may-artifacts/` folder: a fresh session may read it only from a path the user gives, and must recheck it against code and Git.
 - The harness owns permissions, tools, sessions, configured models/accounts, and native delegation defaults. Keep those settings intact; advisory skills do not enforce compliance or provide a sandbox.
-- Plans, notes, and reports stay in chat unless the user requests files. Existing decisions and accepted plans remain useful context, not durable MAY workflow state.
+- MAY never selects models. `may-config` writes per-role model choices into the harness's native project agent files only after the user approves the exact diff, never into user-global configuration.
+- Plans, notes, and reports stay in chat or an owned OS-temp session folder, never in the project unless the user requests files. Existing decisions and accepted plans remain useful context, not durable MAY workflow state.
 
 ## Repository map
 
@@ -16,7 +17,8 @@ This guide governs agents developing MAY itself. User-facing workflow behavior b
 | `skills/may/SKILL.md` | Canonical workflow entry |
 | `skills/may/references/` | Orchestration contract and native harness mappings |
 | `skills/may/scripts/` | Bundled session, verification, and optional E2E runners |
-| `skills/may-*/SKILL.md` | Eight responsibility profiles |
+| `skills/may-*/SKILL.md` | Eight responsibility profiles and the `may-config` model setup skill |
+| `agents/may-<role>.md` | One plugin worker agent per role that preloads that role skill |
 | `scripts/` | Repository checks, version maintenance, and isolated installation tests |
 | `tests/` | Node tests exercising the real Bash scripts and publication boundaries |
 | `package.json` and harness manifests | Distribution metadata and canonical skill discovery |
@@ -59,7 +61,7 @@ npm run check
 
 Keep versions consistent across `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, and `.omp-plugin/marketplace.json`; use the existing version-maintenance script when a version change is requested. Preserve the explicit npm public-file allowlist and inspect the actual artifact inventory after distribution changes.
 
-Installation discovery establishes only `installable`: nine skills and three runnable runtime scripts on a named harness version. `workflow-tested` requires real-model evidence for small repair, feature/review/QA, fail-fix-pass, and interruption followed by a fresh session. Keep README and changelog claims aligned with actual attempts, including failures, permission or credential blockers, model/version, and untested platforms. Fake models and file discovery are not substitutes.
+Installation discovery establishes only `installable`: ten skills and three runnable runtime scripts on a named harness version. It does not cover the role agents; report their discovery separately per harness. `workflow-tested` requires real-model evidence for small repair, feature/review/QA, fail-fix-pass, and interruption followed by a fresh session. Keep README and changelog claims aligned with actual attempts, including failures, permission or credential blockers, model/version, and untested platforms. Fake models and file discovery are not substitutes.
 
 ## Temporary work and delivery
 

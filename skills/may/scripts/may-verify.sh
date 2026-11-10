@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output]\n' >&2; exit 2; }
+usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output] [--log-dir existing-directory]\n' >&2; exit 2; }
 ids=() commands=() owners=() statuses=() codes=()
 seconds=600
+registration=30
 show_output=0
+log_dir=
 while [ "$#" -gt 0 ]; do
  case "$1" in
   --check)
@@ -14,10 +16,20 @@ while [ "$#" -gt 0 ]; do
    ids+=("$id"); commands+=("$cmd"); shift 2 ;;
   --timeout) [ "$#" -ge 2 ] && [[ "$2" =~ ^[1-9][0-9]*$ ]] || usage; seconds="$2"; shift 2 ;;
   --show-output) show_output=1; shift ;;
+  --log-dir) [ "$#" -ge 2 ] && [ -d "$2" ] || usage; log_dir="$2"; [ "$log_dir" = / ] || log_dir="${log_dir%/}"; shift 2 ;;
   *) usage ;;
  esac
 done
 [ "${#ids[@]}" -gt 0 ] || usage
+if [ -n "$log_dir" ]; then
+ # Log names must not collide on case-insensitive filesystems.
+ for ((i=0; i<${#ids[@]}; i++)); do
+  for ((j=0; j<i; j++)); do
+   [ "$(printf %s "${ids[$i]}" | tr A-Z a-z)" != "$(printf %s "${ids[$j]}" | tr A-Z a-z)" ] || usage
+  done
+ done
+fi
+copied=()
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 session="$here/may-session.sh"
 work="$("$BASH" "$session" start)"
@@ -84,11 +96,13 @@ for ((i=0; i<${#ids[@]}; i++)); do
  [ "$owner" -eq "$i" ] || continue
  statuses[$i]=TRIVIAL; codes[$i]='-'
  trivial "${commands[$i]}" && continue
- rm -f "$work/timedout" "$work/cancel"
- "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
- # SECONDS is integer-valued; rounding up prevents terminating a check early.
- deadline=$((SECONDS+seconds+1))
+ rm -f "$work/timedout" "$work/cancel" "$work/started"
+ "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; : > "$2/started"; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
+ # The check's timeout starts with its command, so MAY's own process registration never uses it up.
+ # Registration gets a separate bounded allowance. SECONDS is integer-valued; rounding up prevents terminating a check early.
+ deadline=$((SECONDS+registration+1)); begun=0
  while kill -0 "$pid" 2>/dev/null; do
+  if [ "$begun" -eq 0 ] && [ -e "$work/started" ]; then begun=1; deadline=$((SECONDS+seconds+1)); fi
   if [ "$SECONDS" -ge "$deadline" ]; then touch "$work/timedout"; break; fi
   sleep 0.05
  done
@@ -120,6 +134,18 @@ for ((i=0; i<${#ids[@]}; i++)); do
  owner="${owners[$i]}"; status="${statuses[$owner]}"
  if [ "$initial" != "$final" ] && [ "$status" != TRIVIAL ] && [ "$status" != TIMEOUT ]; then status=CHANGED; fi
  printf '%s  %s  exit=%s  %s\n' "${ids[$i]}" "$status" "${codes[$owner]}" "${commands[$i]}"
+ if [ -n "$log_dir" ] && [ -f "$work/$owner.log" ]; then
+  # Logs are copied after the final fingerprint, so they cannot turn results into CHANGED.
+  if [ "$owner" -eq "$i" ]; then
+   copied[$i]=0
+   cp "$work/$owner.log" "$log_dir/${ids[$i]}.log" && copied[$i]=1
+  fi
+  if [ "${copied[$owner]}" -eq 1 ]; then
+   printf 'LOG %s %s\n' "${ids[$i]}" "$log_dir/${ids[$owner]}.log"
+  else
+   printf 'LOG %s copy failed\n' "${ids[$i]}"
+  fi
+ fi
  if [ "$status" = PASS ]; then passed=$((passed+1)); fi
  if [ -f "$work/$owner.log" ] && { [ "$status" != PASS ] || [ "$show_output" -eq 1 ]; }; then
   printf '%s\n' "--- ${ids[$i]} output tail"; tail -n 40 "$work/$owner.log"

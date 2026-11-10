@@ -6,7 +6,7 @@
 
 Workflow skills for coding agents.
 
-MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships nine skills and three Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
+MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships ten skills and three Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
 
 Your harness still controls models, accounts, tools, permissions, and delegation. MAY supplies written guidance and deterministic scripts, not a workflow engine or sandbox.
 
@@ -19,8 +19,8 @@ Spawning a subagent answers who can do a task. MAY adds a shared contract for wh
 | Responsibility | Native delegation by itself | MAY's documented convention |
 |---|---|---|
 | Plan and handoff | The harness provides task dispatch; the caller supplies the brief | Goal, scope, dependencies, inputs, outputs, and observable criteria |
-| Team selection | Available workers and modes depend on the harness | Direct for small low-risk work; only justified roles otherwise; coordinator-only dispatch |
-| Review | Separation and review policy depend on the caller | Read-only review before final QA, repairs back to the same reviewer; disclosed self-review for Direct work |
+| Team selection | Available workers and modes depend on the harness | A team of named roles (`may-backend`, `may-tech-lead`, …) sized by S, M, or L tier; tier S works inline, only justified roles start as workers; coordinator-only dispatch |
+| Review | Separation and review policy depend on the caller | Read-only review before final QA, repairs back to the same reviewer; disclosed Tech Lead self-review for tier S |
 | Acceptance evidence | The caller decides what results establish completion | Exact criterion commands, current-candidate evidence, explicit failures and blocked checks |
 | Temporary work | Process and artifact handling depend on the tools and caller | Marked OS-temp sessions, retained failure diagnostics, exact-session cleanup |
 
@@ -69,9 +69,9 @@ pi update git:github.com/Rakhulsr/MAY
 
 Pinned Git tags or commits remain pinned. `pi update --extensions` updates all installed packages. For Claude Code, `claude plugin update may@may` updates the plugin; restart Claude Code afterwards. Update the marketplace separately when needed with `claude plugin marketplace update may`.
 
-OMP's plugin CLI exposes `omp plugin upgrade` and `--dry-run`; check `omp plugin --help` and your installed plugin identity before use. Codex's `codex plugin marketplace upgrade may` refreshes the marketplace snapshot, but does not by itself establish that an already-installed plugin has updated. The installed-plugin upgrade path for OMP and Codex has not been verified here; do not assume a marketplace refresh upgrades the installed skill. Check the harness version and plugin documentation for the applicable procedure.
+OMP's plugin CLI exposes `omp plugin upgrade` and `--dry-run`. An upgrade from MAY 0.1.0 to 0.2.0 was observed with OMP 18.18.0 in the local case study; that observation does not establish upgrade behavior for other versions. Codex's `codex plugin marketplace upgrade may` refreshes the marketplace snapshot, but does not by itself establish that an already-installed plugin has updated. Check the harness version and plugin documentation for the applicable procedure.
 
-**Breaking upgrade:** the canonical entry skill was renamed from `using-may` to `may`; there is no compatibility alias. Update prompts and references from `using-may` to `may`, and use the installed `may/SKILL.md` (its `skills/may/SKILL.md` path in this package) instead of the old installed `using-may/SKILL.md`. Remove any separately installed old skill through your harness's documented procedure to avoid stale discovery. Restart the harness or start a fresh session after updating, then verify the loaded skill and its location. Installation of this rename has not been tested. No automatic MAY update notification is promised.
+**Breaking upgrade:** the canonical entry skill was renamed from `using-may` to `may`; there is no compatibility alias. Update prompts and references from `using-may` to `may`, and use the installed `may/SKILL.md` (its `skills/may/SKILL.md` path in this package) instead of the old installed `using-may/SKILL.md`. Remove any separately installed old skill through your harness's documented procedure to avoid stale discovery. Restart the harness or start a fresh session after updating, then verify the loaded skill and its location. A fresh OMP 18.18.0 session loaded the `may` entry skill from the 0.2.0 plugin; this does not establish installation discovery for every skill or harness. No automatic MAY update notification is promised.
 
 ## Start a task
 
@@ -99,11 +99,11 @@ See a [real verification-step example](skills/may/references/examples.md), with 
 
 ## Workflow
 
-![MAY workflow: a coordinator selects Direct implementation and self-review, or an implementation worker with a read-only review and repair loop. Both routes lead to acceptance checks, evidence, and cleanup.](assets/diagrams/workflow.svg)
+![MAY workflow: a coordinator picks tier S, implementing inline with Tech Lead self-review, or tier M/L, dispatching named role workers with a read-only review and repair loop. Both routes lead to acceptance checks, evidence, and cleanup.](assets/diagrams/workflow.svg)
 
 [Editable diagram source](assets/diagrams/workflow.svg)
 
-Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Orchestrated work keeps one writer at a time and uses separate review and QA tasks when delegation is available. Direct work uses non-independent self-review and must say so. Without delegation, tasks run sequentially with the same disclosure.
+Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Tier M and L dispatch named role workers, such as `may-backend` and `may-tech-lead`, keep one writer at a time, and use a separate reviewer when delegation is available. Tier S implements inline under the relevant role lens and uses a disclosed, non-independent Tech Lead self-review. In every tier the coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks. Without delegation, tasks run sequentially with the same disclosure.
 
 Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
 
@@ -122,13 +122,16 @@ Roles are responsibility profiles, not mandatory processes. They give advice gro
 | [may-qa](skills/may-qa/SKILL.md) | Acceptance checks, regression coverage, and current-artifact evidence |
 | [may-security](skills/may-security/SKILL.md) | Threat modeling, auth, secrets, trust boundaries, and review |
 | [may-devops](skills/may-devops/SKILL.md) | Development environments, builds, CI, and deployment risk |
+| [may-config](skills/may-config/SKILL.md) | Per-role model choices in Claude Code, Oh My Pi, Codex, or Pi (pi-subagents) project agent files, written only after approval |
+
+Each role except `may-config` also ships as a worker agent in [`agents/`](agents/), named after the role and preloading its skill, so a dispatched worker appears as `may-backend` rather than a generic agent. Claude Code lists them as `may:may-<role>`. The package also declares them for Pi with pi-subagents, untested there so far. Oh My Pi and Codex plugins do not ship agents, so there the coordinator uses `may-config` project agents or the native default with a role brief.
 
 ## Requirements and limits
 
 - Pi, Oh My Pi, Codex, and Claude Code have native integration metadata and tool mappings. Available tools, permissions, and model behavior depend on your harness and configuration.
 - Runtime scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows. Node is needed for MAY's repository tests, not workflow state.
 - Browser verification needs a trusted browser connection or the project's already-installed Playwright. MAY does not install browser tooling automatically. Missing capability is blocked, not a pass.
-- MAY has no database, background service, persistent workflow state, or cross-session resume. Plans and reports stay in chat unless you request files. New sessions start from code and Git status.
+- MAY has no database, background service, persistent workflow state, or cross-session resume. Plans and reports stay in chat or a temporary session folder, never in your project unless you request files. New sessions start from code and Git status.
 - Skills cannot enforce model compliance or provide isolation. See the [trust and security policy](SECURITY.md) before authorizing commands or handling sensitive data.
 
 For agent-managed and manual checks, exit codes, failure-artifact inspection, and interrupted-session cleanup, read the [runtime guide](skills/may/references/runtime.md). For repository setup, checks, and local plugin development, read [CONTRIBUTING.md](CONTRIBUTING.md). Changes are recorded in [CHANGELOG.md](CHANGELOG.md).

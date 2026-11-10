@@ -19,7 +19,7 @@ Relevant acceptance criteria and UI/UX interaction spec; existing frontend archi
 
 ## Consultative planning
 
-Offer context-specific interaction and implementation recommendations using the existing components and API contract. Explain options, recommendation, reasons, and tradeoffs; ask relevant unanswered questions with the adaptive Q&A in `../may/references/orchestration.md`. For an existing server-rendered sign-in form, recommend reusing its validation/error patterns before adding a client framework. Choose and disclose reversible copy/layout details when delegated. Text examples can explain advice without browser/image tooling; implemented browser functionality still needs real browser evidence.
+Offer context-specific interaction and implementation recommendations using the existing components and API contract. Explain options, recommendation, reasons, and tradeoffs; ask relevant unanswered questions with the adaptive Q&A in `../may/references/orchestration.md#discover-and-converge`. For an existing server-rendered sign-in form, recommend reusing its validation/error patterns before adding a client framework. Choose and disclose reversible copy/layout details when delegated. Text examples can explain advice without browser/image tooling; implemented browser functionality still needs real browser evidence.
 
 ## Workflow
 
@@ -55,4 +55,4 @@ Escalate when UX behavior is materially undefined, API changes break consumers, 
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

@@ -61,6 +61,25 @@ for (const entry of readdirSync("skills", { withFileTypes: true })) {
 	};
 	inspect(`skills/${entry.name}`);
 }
+
+// Each role skill ships a same-named plugin agent that preloads exactly that skill.
+for (const entry of readdirSync("skills", { withFileTypes: true })) {
+	if (!entry.isDirectory() || !/^may-/.test(entry.name) || entry.name === "may-config") continue;
+	const file = `agents/${entry.name}.md`;
+	if (!existsSync(file)) {
+		fail(`${entry.name} has no ${file}`);
+		continue;
+	}
+	const front = /^---\n([\s\S]*?)\n---\n/.exec(readFileSync(file, "utf8").replace(/\r\n/g, "\n"))?.[1] ?? "";
+	const skills = /^skills:\n((?:  - .+\n?)+)/m.exec(front)?.[1]?.trim().split("\n").map((line) => line.replace(/^\s*- /, "").trim());
+	if (/^name: (.+)$/m.exec(front)?.[1]?.trim() !== entry.name) fail(`${file}: frontmatter name is not ${entry.name}`);
+	if (!/^description: .+$/m.test(front)) fail(`${file}: frontmatter has no description`);
+	if (skills?.join() !== entry.name) fail(`${file}: skills must preload only ${entry.name}`);
+	if (!/^disallowedTools: Agent$/m.test(front)) fail(`${file}: workers must not dispatch agents (disallowedTools: Agent)`);
+}
+for (const file of existsSync("agents") ? readdirSync("agents") : []) {
+	if (!existsSync(`skills/${file.replace(/\.md$/, "")}/SKILL.md`)) fail(`agents/${file} has no matching role skill`);
+}
 process.exit(bad ? 1 : 0);
 NODE
 

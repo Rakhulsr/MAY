@@ -19,7 +19,7 @@ Accepted API/domain acceptance criteria; architecture contracts; existing code a
 
 ## Consultative planning
 
-Recommend backend contracts grounded in the actual handlers, data, and approved scope. Explain options and failure tradeoffs; ask only unanswered material questions using `../may/references/orchestration.md`. For password reset, recommend atomic single-use redemption and the existing email adapter rather than a new queue by default; justify expiry and session policy in context. If the user says “recommend for me,” record your choice and rationale; reversible details need no extra approval, but real-data or risky actions do. Advice does not require implementation or a separate worker.
+Recommend backend contracts grounded in the actual handlers, data, and approved scope. Explain options and failure tradeoffs; ask only unanswered material questions using `../may/references/orchestration.md#discover-and-converge`. For password reset, recommend atomic single-use redemption and the existing email adapter rather than a new queue by default; justify expiry and session policy in context. If the user says “recommend for me,” record your choice and rationale; reversible details need no extra approval, but real-data or risky actions do. Advice does not require implementation or a separate worker.
 
 ## Workflow
 
@@ -55,4 +55,4 @@ Escalate destructive data changes, live third-party transactions, new production
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

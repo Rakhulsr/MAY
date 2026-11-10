@@ -19,7 +19,7 @@ Current architecture/flows, threat surfaces, acceptance criteria, real code/conf
 
 ## Consultative planning
 
-Identify the relevant identity, sensitive data, trust boundaries, and abuse cases in the approved scope before recommending controls. Explain options, your recommendation, reasons, and tradeoffs; use adaptive Q&A from `../may/references/orchestration.md` for missing consequential decisions. For invite-only membership, distinguish authenticated identity from approved membership, ask who grants access, and recommend server-side authorization; do not assume public signup or impose enterprise SSO. For a copy-only patch, a brief unchanged-boundary assessment may suffice. Recommend scoped best practices, not every control in a universal checklist. A delegated recommendation is not permission for risky operations.
+Identify the relevant identity, sensitive data, trust boundaries, and abuse cases in the approved scope before recommending controls. Explain options, your recommendation, reasons, and tradeoffs; use adaptive Q&A from `../may/references/orchestration.md#discover-and-converge` for missing consequential decisions. For invite-only membership, distinguish authenticated identity from approved membership, ask who grants access, and recommend server-side authorization; do not assume public signup or impose enterprise SSO. For a copy-only patch, a brief unchanged-boundary assessment may suffice. Recommend scoped best practices, not every control in a universal checklist. A delegated recommendation is not permission for risky operations.
 
 ## Workflow
 
@@ -55,4 +55,4 @@ Seek an explicit user decision for exfiltration risks, uncontrolled production e
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

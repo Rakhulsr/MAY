@@ -7,19 +7,19 @@ This is an illustrative request, not a transcript or a claim of completed work:
 ```text
 Use MAY to fix login validation. Inspect the existing auth code and my
 working-tree changes first. Keep the scope to the validation bug and a
-regression test. State the acceptance checks, use Direct work if the
-risk is small, and disclose whether review is independent. Keep the
+regression test. State the acceptance checks, keep the team small if
+the risk is small, and disclose whether review is independent. Keep the
 plan and evidence report in chat.
 ```
 
 The agent should turn the request into a scoped plan using the [orchestration contract](orchestration.md), not copy a fixed team roster. The exact files, repair, and checks depend on the inspected project. For installed scripts, resolve the harness-provided skill directory as explained in the [runtime guide](runtime.md).
 
-## Mode and boundary examples
+## Team header and boundary examples
 
 These are illustrative chat lines, not observed worker runs or acceptance evidence:
 
 ```text
-Mode: Direct | Workers: 0 | Review: self-review (not independent)
+Tier: S | Team: Tech Lead (coordinator) · Backend (inline) | Review: Tech Lead lens, self-review (not independent)
 Reason: one local helper repair, unchanged interface, focused regression.
 Ready: accepted repair scope; T1-T3 cover AC1; no material blocker.
 Review: candidate C1 (current source/test snapshot, including uncommitted files);
@@ -31,11 +31,11 @@ report actual output and missing evidence, not an assumed PASS.
 A response-contract change consumed by multiple UI surfaces needs a different assessment: explain the contract/regression risk, serialize shared-file writers, and justify independent review. Reading Backend, Frontend, PM, or Tech Lead profiles inline does not start those workers.
 
 ```text
-Mode: Orchestrated | Planned: Backend, Frontend, review, QA |
-Started: 0 | Completed: 0 | Review: pending
+Tier: L | Team: Tech Lead (coordinator) · may-backend (planned) · may-frontend (planned) ·
+may-tech-lead (reviewer, planned) · Security (inline lens) | Review: pending
 ```
 
-Update this line with actual dispatch results. If native dispatch fails authentication or an override is denied, report the blocked worker and needed owner decision; do not silently change mode, model, account, or configuration. A permitted owner-approved recovery is a new authorized action, not an automatic retry.
+Update worker states with actual dispatch results, for example `may-backend (done)`. Each worker's result starts with `ROLE: may-<role>`. If native dispatch fails authentication or an override is denied, report the blocked worker and needed owner decision; do not silently change tier, model, account, or configuration. A permitted owner-approved recovery is a new authorized action, not an automatic retry.
 
 For an interrupted QA worker, a brief handoff might identify task/criteria, the reviewed candidate snapshot, reviewer acceptance, and `WORKER_FAILED | CHECK_PASSED exit=0` only after inspecting the known raw output and confirming its candidate binding. Include the exact check command, required nonsecret input such as `FIXTURE_MODULE=<resolved existing module path>`, and the recorded owned session/artifact paths. A missing input or inaccessible log leaves a gap; it does not authorize installing a dependency or inventing a result. Retain needed raw artifacts until inspection, then clean the exact session. This is same-session recovery context, not stored cross-session workflow state.
 

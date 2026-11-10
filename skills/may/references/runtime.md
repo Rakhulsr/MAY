@@ -8,7 +8,7 @@ Normally, ask for the outcome: “Use MAY to build login and test it in the brow
 
 [Editable diagram source](../../../assets/diagrams/runtime-boundary.svg)
 
-The harness runs the agent and controls access. MAY skills guide its decisions; bundled scripts perform deterministic shell operations with the permissions already granted. They do not host agents or enforce the written review gates. Plans and reports stay in chat unless requested as files. Temporary logs and process records are not persistent workflow state.
+The harness runs the agent and controls access. MAY skills guide its decisions; bundled scripts perform deterministic shell operations with the permissions already granted. They do not host agents or enforce the written review gates. Plans and reports stay in chat or a temporary session folder, never in the project unless requested as files. Temporary logs and process records are not persistent workflow state.
 
 ## Scripts and requirements
 
@@ -28,7 +28,7 @@ The agent runs the plan's actual criterion commands after current review accepta
 bash "$MAY_SKILL_DIR/scripts/may-verify.sh" --check "AC1=npm test" --timeout 600
 ```
 
-Repeat `--check "ID=command"` for more criteria. Identical commands execute once and identify all covered criteria. The agent displays the complete `MAY VERIFY` table. To inspect output for a `PASS`, add `--show-output`: it prints the last 40 lines, not a complete log. The command string and output tails for non-PASS results are displayed even without this option; commands and output must be safe to disclose and must not contain secrets. Temporary logs are removed on successful cleanup; cleanup failure can retain them. See an [observed verifier example](examples.md#observed-verification-step).
+Each `--timeout` starts when the criterion command starts; MAY's own process registration before it gets a separate allowance of up to 30 seconds, so a check's wall time can exceed its timeout by that much. The E2E runner's `--wait` works the same way. Repeat `--check "ID=command"` for more criteria. Add `--log-dir <existing directory>`, normally the current session folder, to keep each check's complete output as `<ID>.log`; the table then gains `LOG <ID> <path>` lines, and checks sharing one command point at the first ID's log. Do not point it inside the project tree, or the logs become untracked changes for the next run. Without the option, output is unchanged. Identical commands execute once and identify all covered criteria. The agent displays the complete `MAY VERIFY` table. To inspect output for a `PASS`, add `--show-output`: it prints the last 40 lines, not a complete log. The command string and output tails for non-PASS results are displayed even without this option; commands and output must be safe to disclose and must not contain secrets. Temporary logs are removed on successful cleanup; cleanup failure can retain them. See an [observed verifier example](examples.md#observed-verification-step).
 
 | Status | Meaning |
 |---|---|
@@ -111,4 +111,4 @@ Create temporary work only with `may-session.sh start` and record its absolute p
 
 Attempt exact-session cleanup on failure or cancellation. An EXIT trap cannot guarantee recovery after a forced kill. A later call or fresh session can stop the recorded path without relying on lost shell variables. Resolve `MAY_SKILL_DIR` again and use the same OS-temp root if environment overrides were used to create the session. Report only observed cleanup and disclose any remaining owned path or process.
 
-`sweep` is separate stale-folder recovery for marked sessions at least 24 hours old with no live recorded process/group; `start` also runs that default sweep. It is not proof that an interrupted run cleaned up. There is no MAY workflow-state folder in the project or home directory, and a fresh session does not resume stored workflow state.
+`sweep` is separate stale-folder recovery for marked sessions at least 24 hours old with no live recorded process/group; `start` also runs that default sweep. It is not proof that an interrupted run cleaned up. There is no MAY workflow-state folder in the project or home directory, and a fresh session does not resume stored workflow state. A phase-reset `handoff.md` lives in a session folder only until that session is stopped; a fresh session reads it only from a path the user gives, rechecks it against the code, and stops that session when done. Because `start` sweeps marked folders untouched for 24 hours, continue within that window.

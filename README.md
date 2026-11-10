@@ -6,7 +6,7 @@
 
 Workflow skills for coding agents.
 
-MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships ten skills and three Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
+MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships ten skills and four Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
 
 Your harness still controls models, accounts, tools, permissions, and delegation. MAY supplies written guidance and deterministic scripts, not a workflow engine or sandbox.
 
@@ -112,6 +112,8 @@ Keep the plan in chat; do not change files yet.
 ```
 
 The agent should inspect code and Git status, reuse settled decisions, and ask only material unanswered questions. You can answer “recommend for me” to delegate a choice with its rationale and tradeoffs. Planning does not require an external brainstorming skill; planning-only work ends with human plan review, not application tests presented as proof of prose.
+
+For a user-directed ideation handoff or independent critique, ask MAY to use the [manual ideation bridge](skills/may/references/ideation-bridge.md). Packets are transferred by the user; the optional structural validator needs Bash and an already-installed Node.js 18 or newer. Neither packet validation nor skill guidance enforces permissions or proves claims.
 
 See a [real verification-step example](skills/may/references/examples.md), with its exact observed output and limits.
 

@@ -78,7 +78,7 @@ report() {
 		runtime="$(find "$home" -type d -path '*/may/scripts' -print -quit)"
 	fi
 	[ -n "$runtime" ] || { echo "FAIL $harness: installed runtime directory missing"; exit 1; }
-	for name in may-session.sh may-verify.sh may-e2e.sh; do
+	for name in may-session.sh may-verify.sh may-e2e.sh may-bridge.sh; do
 		[ -f "$runtime/$name" ] && bash -n "$runtime/$name" || { echo "FAIL $harness: $name missing or invalid"; exit 1; }
 	done
 	local session code
@@ -91,7 +91,9 @@ report() {
 	[ "$code" -eq 2 ] || { echo "FAIL $harness: installed verifier did not run"; exit 1; }
 	code=0; bash "$runtime/may-e2e.sh" >/dev/null 2>&1 || code=$?
 	[ "$code" -eq 2 ] || { echo "FAIL $harness: installed E2E script did not run"; exit 1; }
-	echo "OK $harness: 3 of 3 runtime scripts present and runnable."
+	code=0; bash "$runtime/may-bridge.sh" >/dev/null 2>&1 || code=$?
+	[ "$code" -eq 2 ] || { echo "FAIL $harness: installed bridge usage did not run"; exit 1; }
+	echo "OK $harness: session, verifier, and E2E scripts runnable; bridge usage available (packet validation untested)."
 	echo "OK $harness ($version): $found of $expected_skills skills installed. Level: installable."
 }
 

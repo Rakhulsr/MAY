@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MIP/1 packet",
+  "description": "Structural contract. The MAY validator also checks file size, duplicate keys, calendar dates, unique IDs, evidence references and whether a proposal recommendation matches an option.",
+  "$defs": {
+    "text": { "type": "string", "pattern": "\\S" },
+    "texts": { "type": "array", "items": { "$ref": "#/$defs/text" } },
+    "nullableText": { "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/text" }] },
+    "option": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "description", "advantages", "risks"],
+      "properties": {
+        "id": { "$ref": "#/$defs/text" }, "description": { "$ref": "#/$defs/text" },
+        "advantages": { "$ref": "#/$defs/texts" }, "risks": { "$ref": "#/$defs/texts" }
+      }
+    },
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement", "assessment", "reason"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/text" },
+        "assessment": { "enum": ["confirmed", "unsupported", "alternative", "disagreement"] },
+        "reason": { "$ref": "#/$defs/text" }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["statement", "status", "reason"],
+      "properties": {
+        "statement": { "$ref": "#/$defs/text" },
+        "status": { "enum": ["proposed", "accepted", "rejected", "deferred"] },
+        "reason": { "$ref": "#/$defs/text" }
+      }
+    }
+  },
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "id", "kind", "created_at", "parents", "source", "context", "task", "claims", "evidence", "open_questions", "payload"],
+  "properties": {
+    "schema_version": { "const": "mip/1" },
+    "id": { "$ref": "#/$defs/text" },
+    "kind": { "enum": ["brief", "proposal", "review", "resolution"] },
+    "created_at": { "type": "string", "format": "date-time", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$" },
+    "parents": { "$ref": "#/$defs/texts" },
+    "source": {
+      "type": "object", "additionalProperties": false, "required": ["harness"],
+      "properties": { "harness": { "$ref": "#/$defs/text" }, "model": { "$ref": "#/$defs/text" } }
+    },
+    "context": {
+      "type": "object", "additionalProperties": false, "required": ["revision", "fingerprint", "scope"],
+      "properties": { "revision": { "$ref": "#/$defs/nullableText" }, "fingerprint": { "$ref": "#/$defs/nullableText" }, "scope": { "$ref": "#/$defs/texts" } }
+    },
+    "task": {
+      "type": "object", "additionalProperties": false, "required": ["goal", "constraints"],
+      "properties": { "goal": { "$ref": "#/$defs/text" }, "constraints": { "$ref": "#/$defs/texts" } }
+    },
+    "claims": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "statement", "status", "evidence_ids"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" }, "statement": { "$ref": "#/$defs/text" },
+          "status": { "enum": ["hypothesis", "supported", "contradicted", "unknown"] }, "evidence_ids": { "$ref": "#/$defs/texts" }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["id", "type", "locator", "verification"],
+        "properties": {
+          "id": { "$ref": "#/$defs/text" }, "type": { "$ref": "#/$defs/text" }, "locator": { "$ref": "#/$defs/text" },
+          "verification": { "enum": ["unverified", "verified", "stale", "unavailable"] }
+        }
+      }
+    },
+    "open_questions": { "$ref": "#/$defs/texts" },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "brief" } }, "required": ["kind"] },
+      "then": { "properties": { "payload": { "type": "object", "additionalProperties": false, "required": ["questions"], "properties": { "questions": { "$ref": "#/$defs/texts" } } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "proposal" } }, "required": ["kind"] },
+      "then": { "properties": { "payload": { "type": "object", "additionalProperties": false, "required": ["options", "recommendation"], "properties": { "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/option" } }, "recommendation": { "$ref": "#/$defs/text" } } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "review" } }, "required": ["kind"] },
+      "then": { "properties": { "payload": { "type": "object", "additionalProperties": false, "required": ["target_id", "findings"], "properties": { "target_id": { "$ref": "#/$defs/text" }, "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } } } } } }
+    },
+    {
+      "if": { "properties": { "kind": { "const": "resolution" } }, "required": ["kind"] },
+      "then": { "properties": { "payload": { "type": "object", "additionalProperties": false, "required": ["decisions", "disagreements"], "properties": { "decisions": { "type": "array", "items": { "$ref": "#/$defs/decision" } }, "disagreements": { "$ref": "#/$defs/texts" } } } } }
+    }
+  ]
+}

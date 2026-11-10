@@ -1,11 +1,13 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import type { TestContext } from "node:test";
 import { resolveBash } from "../scripts/bash.ts";
 
-export const bash = resolveBash();
+// Absolute, so tests that replace PATH can still launch Bash (resolveBash returns a bare `bash` off Windows).
+const found = resolveBash();
+export const bash = isAbsolute(found) ? found : execFileSync(found, ["-c", 'printf %s "$BASH"'], { encoding: "utf8" });
 
 export function tempDir(t: TestContext, prefix = "may-test-") {
 	const dir = realpathSync.native(mkdtempSync(join(tmpdir(), prefix)));

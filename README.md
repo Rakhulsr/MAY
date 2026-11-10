@@ -152,6 +152,7 @@ Each role except `may-config` also ships as a worker agent in [`agents/`](agents
 - Runtime scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows. Node is needed for MAY's repository tests, not workflow state.
 - Browser verification needs a trusted browser connection or the project's already-installed Playwright. MAY does not install browser tooling automatically. Missing capability is blocked, not a pass.
 - MAY has no database, background service, persistent workflow state, or cross-session resume. Plans and reports stay in chat or a temporary session folder, never in your project unless you request files. New sessions start from code and Git status.
+- Workflow-tested on Claude Code 2.1.322 with `claude-opus-5-5` on Windows: one headless run each of a small repair, a feature with independent review and QA, a fail-fix-pass repair, and a forced interruption continued in a fresh session, all passing their oracles, under the user's `auto` permission mode. Other harnesses, models, and platforms are not workflow-tested.
 - Skills cannot enforce model compliance or provide isolation. See the [trust and security policy](SECURITY.md) before authorizing commands or handling sensitive data.
 
 For agent-managed and manual checks, exit codes, failure-artifact inspection, and interrupted-session cleanup, read the [runtime guide](skills/may/references/runtime.md). For repository setup, checks, and local plugin development, read [CONTRIBUTING.md](CONTRIBUTING.md). Changes are recorded in [CHANGELOG.md](CHANGELOG.md).

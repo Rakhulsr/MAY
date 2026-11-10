@@ -1,12 +1,12 @@
 # Token benchmark
 
-Compares coordinator and worker token use between MAY versions on two small, independent Node projects. Fixtures use only the Node standard library; nothing is installed.
+This benchmark compares token use and task results between MAY versions. Each run starts with a fresh sample project, asks an agent to make the same change, and checks the result with an independent oracle. A passing oracle means that run met the oracle's checks; it does not prove every requirement or establish that one version is better.
 
 | Scenario | Fixture | Task size |
 |---|---|---|
 | B-S | `fixtures/orders` | One module plus its consumer |
 | B-M | `fixtures/notes` | Store, HTTP API, client and HTML render contract |
-| B-L | `fixtures/notes` | Four phases across store, API, client and render; grows coordinator context |
+| B-L | `fixtures/notes` | Four phases across store, API, client and render |
 
 Oracles in `oracles/` stay outside the run project, so workers cannot edit them. `reference/` holds one passing solution, used only by `tests/benchmark.test.ts` to prove each oracle is satisfiable. Do not give the reference to a run.
 
@@ -22,6 +22,10 @@ Use the same harness version, model, reasoning level and permission mode for eve
 6. Run the printed cleanup command.
 
 Record per run: MAY version, harness and version, model, scenario, oracle exit, coordinator total and `maxContext`, coordinator calls, worker count and totals, run total, interventions, and any failure. Failed or unrun runs are reported, not dropped. One run per cell measures one observation, not a reliable average.
+
+Read results alongside the model, harness, number of runs, and oracle outcome. A lower token count on a failed task is not a saving. Compare costs only when the provider's pricing and accounting are known; `weighted` uses Anthropic-specific ratios and must not be treated as Codex cost. Small scenarios cannot establish performance on long sessions.
+
+This repository currently includes `tests/` in the npm package allowlist, so benchmark fixtures and reports under that directory are included too. Review the package inventory and remove private paths or data before publishing.
 
 ## Prompts
 
@@ -74,4 +78,4 @@ Use it when B-M stays Direct, so coordinator and worker behavior is exercised.
 ## Reports
 
 - [0.2.0 exploratory comparison](benchmark-0.2.0.md)
-- [0.2.0 and 0.3.0 tokens on Claude Code](benchmark-0.3.0.md)
+- [0.2.0 and 0.3.0 results on Claude Code and Oh My Pi](benchmark-0.3.0.md)

@@ -49,6 +49,16 @@ Keep each change focused. Explain:
 
 Update affected documentation and record user-facing changes in [CHANGELOG.md](CHANGELOG.md). Keep support claims aligned with actual evidence, including failures and permission or credential blockers. Do not describe an unrun check as passing.
 
+### Protected branches and security review
+
+Changes to `main`, `release`, and `release/*` go through pull requests. CI runs repository checks, script tests, an npm advisory audit, and a static audit of GitHub Actions workflows. The workflow uses read-only repository access and does not give pull requests secrets. Dependabot proposes updates to GitHub Actions; review the action source and pinned commit before merging.
+
+Review changes to skills, agent instructions, documentation, scripts, and workflows for prompt injection: identify untrusted content, instructions that claim authority or request secrets, permission escalation, external communication, and destructive commands. Check that tool permissions and human approval remain with the harness and user. An automated workflow scan detects some unsafe Actions patterns, not prompt injection in arbitrary content; passing CI is not proof that a change is safe.
+
+Repository administrators must configure branch rulesets separately; committing a workflow does not protect a branch. In GitHub Settings → Rules → Rulesets, target `main`, `release`, `release/*`, and `release/**/*` (add patterns for deeper release branches as needed). Require pull requests, at least one approval, dismissal of stale approvals, resolution of review conversations, and the `Repository checks` and `Workflow security` status checks from GitHub Actions. Block force pushes and deletion, and limit bypass privileges. Enable the merge queue only if desired; CI supports its `merge_group` event. Apply protection after the workflow has run and the checks are selectable. Review changes to `.github/` and security-sensitive instructions especially carefully; if code-owner review is required, configure actual maintainers as code owners first.
+
+Use short-lived branches from `main`; stabilize releases on `release` or `release/<version>` and merge release fixes back to `main` through a reviewed pull request. Enable GitHub secret scanning, push protection, Dependabot alerts, and Actions code scanning where available. These are repository settings and are not enabled by this workflow.
+
 ## Distribution consistency
 
 Keep package and integration manifest versions consistent. Change versions only as part of an intended version update, using the existing version-maintenance script.

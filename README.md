@@ -19,7 +19,7 @@ Spawning a subagent answers who can do a task. MAY adds a shared contract for wh
 | Responsibility | Native delegation by itself | MAY's documented convention |
 |---|---|---|
 | Plan and handoff | The harness provides task dispatch; the caller supplies the brief | Goal, scope, dependencies, inputs, outputs, and observable criteria |
-| Team selection | Available workers and modes depend on the harness | A team of named roles (`may-backend`, `may-tech-lead`, …) sized by S, M, or L tier; tier S works inline, only justified roles start as workers; coordinator-only dispatch |
+| Team selection | Available workers and modes depend on the harness | Named roles sized by S, M, or L tier; tier S works inline, and bridged leads may dispatch leaf workers |
 | Review | Separation and review policy depend on the caller | Read-only review before final QA, repairs back to the same reviewer; disclosed Tech Lead self-review for tier S |
 | Acceptance evidence | The caller decides what results establish completion | Exact criterion commands, current-candidate evidence, explicit failures and blocked checks |
 | Temporary work | Process and artifact handling depend on the tools and caller | Marked OS-temp sessions, retained failure diagnostics, exact-session cleanup |
@@ -117,8 +117,8 @@ For a user-directed ideation handoff or independent critique, ask MAY to use the
 
 When you ask for it, MAY can also hand work to another harness:
 
-- **Cross-harness review:** the coordinator sends the criteria and diff to Codex, Claude Code, Pi, or Oh My Pi running headless and read-only, and records its findings as an independent review after checking them against the code. Name the harness; the diff goes to that harness's provider. See [cross-harness review](skills/may/references/ideation-bridge.md#cross-harness-review).
-- **Visible panes:** `may-bridge.sh host` detects the terminal host (Herdr, herdr-app, zellij, tmux, WezTerm, Windows Terminal, VS Code, Zed, or none), and `may-bridge.sh open <program> [args...]` opens the other harness in a pane of that host instead of a new window. Where a host has no pane command, the coordinator runs the harness headless. See [launching another harness](skills/may/references/ideation-bridge.md#launching-another-harness).
+- **Cross-harness workers:** choose a reviewer or implementer at the team gate. The coordinator prefers a visible pane, checks the returned result against the checkout, and uses headless fallback when a pane is unavailable; a headless writer requires your approval. See [the bridge](skills/may/references/ideation-bridge.md#launching-another-harness).
+- **Visible panes:** `may-bridge.sh host` detects the terminal host and `may-bridge.sh open <program> [args...]` opens its pane or tab instead of a new window. You answer permission prompts there. A review sends the criteria and diff to the named harness's provider.
 
 See a [real verification-step example](skills/may/references/examples.md), with its exact observed output and limits.
 
@@ -133,12 +133,12 @@ The coordinator picks a tier from the areas the change touches (a data store, AP
 | Tier | When | Team |
 |---|---|---|
 | S | One area, no contract change, low risk | No workers; the coordinator implements inline and self-reviews with the Tech Lead lens, disclosed as not independent |
-| M | Two or more areas, a contract change, or auth or data risk in one area | One named implementer and one read-only reviewer chosen by risk (`may-tech-lead`, `may-security`, or `may-ui-ux`) |
-| L | Phased or very large work, risk across areas, or areas touching the same files | One implementer per area, named reviewers per risk, and a [phase reset](skills/may/references/phase-reset.md) between phases |
+| M | Two or more areas, a contract change, or auth or data risk in one area | One named implementer per workstream and one read-only reviewer chosen by risk (`may-tech-lead`, `may-security`, or `may-ui-ux`) |
+| L | Phased or very large work, risk across areas, or areas touching the same files | One implementer per workstream, named reviewers per risk, and a [phase reset](skills/may/references/phase-reset.md) between phases |
 
 Only you can move work to a smaller tier. Long work can end a phase with a `handoff.md` in the session folder, which a fresh session reads only from a path you give it and rechecks against Git.
 
-Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Tier M and L dispatch named role workers, such as `may-backend` and `may-tech-lead`, keep one writer per checkout, and use a separate reviewer when delegation is available. Tier L areas that change separate files can run as [parallel writers](skills/may/references/orchestration.md#parallel-writers) when the harness gives each worker its own checkout and the working tree is clean; the coordinator checks each checkout's base, applies one patch at a time, and reviews and verifies the combined result. Tier S implements inline under the relevant role lens and uses a disclosed, non-independent Tech Lead self-review. In every tier the coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks. Without delegation, tasks run sequentially with the same disclosure.
+The coordinator dispatches workers; [bridged leads](skills/may/references/orchestration.md#bridged-leads) can dispatch their own leaf workers. Tier M and L workstreams can use [parallel writers](skills/may/references/orchestration.md#parallel-writers) on disjoint files in a shared or isolated checkout; read-only workers can run alongside them. At plan acceptance you see each worker's role, task, harness, and model and can keep or change the per-run team. Repairs return to the same worker when native continuation is available, and reports list harness-reported worker usage or `unavailable`. Tier S implements inline with disclosed Tech Lead self-review; the coordinator runs final verification in every tier. Without delegation, tasks run sequentially with the same disclosure.
 
 Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
 
@@ -167,7 +167,7 @@ Each role except `may-config` also ships as a worker agent in [`agents/`](agents
 - Runtime scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows. Node is needed for MAY's repository tests, not workflow state.
 - Browser verification needs a trusted browser connection or the project's already-installed Playwright. MAY does not install browser tooling automatically. Missing capability is blocked, not a pass.
 - MAY has no database, background service, persistent workflow state, or cross-session resume. Plans and reports stay in chat or a temporary session folder, never in your project unless you request files. New sessions start from code and Git status.
-- Parallel writers need native per-worker isolation: Claude Code `isolation: "worktree"`, pi-subagents `worktree: true`, or Oh My Pi `isolated: true` after you enable `task.isolation.enabled`. Codex sub-agents share one checkout, so Codex stays with one writer. One Claude Code run is tested; Pi and Oh My Pi parallel writers are untested.
+- Tier M and L parallel writers can share a checkout with disjoint file assignments and restricted checks, or use native per-worker isolation when available; see the [contract](skills/may/references/orchestration.md#parallel-writers). The shared-checkout workflow and new team, continuation, cost-report, and visible cross-harness implementer guidance are untested with real models.
 - Workflow-tested on Claude Code 2.1.322 with `claude-opus-5-5` on Windows: one headless run each of a small repair, a feature with independent review and QA, a fail-fix-pass repair, and a forced interruption continued in a fresh session, all passing their oracles, under the user's `auto` permission mode. Other harnesses, models, and platforms are not workflow-tested.
 - Skills cannot enforce model compliance or provide isolation. See the [trust and security policy](SECURITY.md) before authorizing commands or handling sensitive data.
 

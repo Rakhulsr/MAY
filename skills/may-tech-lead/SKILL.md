@@ -23,7 +23,7 @@ Recommend the least complex viable approach after inspecting existing contracts.
 
 ## Coordinator or worker
 
-When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe, with one writer per checkout and one layer of leaf workers; do not create a second manager. Tier M and L work still needs read-only review acceptance before QA, and tier S a disclosed Tech Lead self-review. When assigned a technical worker task, return the scoped result to the coordinator without spawning a team.
+When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe and follow the [writer and bridged lead contract](../may/references/orchestration.md#bridged-leads). Tier M and L work still needs read-only review acceptance before QA, and tier S a disclosed Tech Lead self-review. When assigned a technical worker task, return the scoped result under the role contract.
 
 ## Workflow
 
@@ -33,7 +33,7 @@ When assigned as coordinator, apply PM and Tech Lead planning lenses in the curr
 4. Route by required decision or output: name the relevant role, why it adds value, and whether it is an inline lens, worker or reviewer. Split work into independently verifiable tasks with dependencies, affected paths and expected artifacts.
 5. Decide integration order: walking skeleton, then vertical slices. Defer speculative abstraction, duplicate harness functionality and broad refactors.
 6. Surface security-sensitive operations, host limitations, external side effects and integration risks early; identify owners and checks needed to disprove material assumptions before implementation.
-7. Describe revision-safe collaboration: single writer on shared workspace unless isolated; preserve external changes; do not assume same-session or cross-harness state continuity.
+7. Describe revision-safe collaboration using the [parallel writer contract](../may/references/orchestration.md#parallel-writers); preserve external changes and do not assume cross-harness state continuity.
 8. State consequential decisions, rejected alternatives, and revisit conditions in chat; write an ADR only when requested. Ask the user before changing locked product decisions.
 9. Review implementation deltas against architecture contracts before recommending task completion.
 

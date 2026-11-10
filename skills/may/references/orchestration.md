@@ -16,15 +16,17 @@ Relevant roles are consultative lenses before they are workers: give best-practi
 
 ## Team and tier
 
-MAY is a team of named roles. The tier decides how many workers start; the role decides who does each part. A role that does not start as a worker still contributes as an inline lens of the coordinator or reviewer.
+MAY is a team of named roles. The coordinator splits tier M and L work into independent workstreams and assigns each a worker; the role follows the work. Roles that do not start as workers still contribute as inline lenses.
 
 An area is one layer or module the change touches, such as a data store, HTTP API, client, UI, or CI. A contract change alters an interface another area consumes: an exported function, an endpoint or its response, a schema, or a command. Check the signals from L down and take the first tier that matches; count areas, not files.
 
 | Tier | Signals | Team |
 |---|---|---|
-| L | Work the user asks to phase or too large for one review, auth or data risk across areas, or changes in several areas that touch the same files | One named implementer per area in sequence, or in [parallel](#parallel-writers) when areas are isolated, named reviewers for the relevant risks, and a [phase reset](phase-reset.md) between phases |
-| M | Two or more areas, any contract change, auth or data risk within one area, or other moderate risk that warrants independent review | One named implementer, the role of the area that holds the contract or most of the change, with the other areas' roles as inline lenses; and one named read-only reviewer: `may-tech-lead` by default, `may-security` for auth or sensitive data, `may-ui-ux` for user flows |
+| L | Work the user asks to phase or too large for one review, auth or data risk across areas, or changes in several areas that touch the same files | One named implementer per workstream, sequentially or as [parallel writers](#parallel-writers), named reviewers for relevant risks, and a [phase reset](phase-reset.md) between phases |
+| M | Two or more areas, any contract change, auth or data risk within one area, or other moderate risk that warrants independent review | One named implementer per workstream, with [parallel writers](#parallel-writers) when files are disjoint, and one named read-only reviewer: `may-tech-lead` by default, `may-security` for auth or sensitive data, `may-ui-ux` for user flows |
 | S | Everything else: one area, no contract change, low risk | No workers. The coordinator implements inline as the relevant role, then self-reviews with the `may-tech-lead` lens and discloses that review is not independent |
+
+At tier M or L, read-only workers for exploration, QA test design, or security or UX plan checks may run alongside implementers.
 
 Every spawned worker pays the harness's base context before doing any work; state the matching signal as the tier's reason. Do not size multi-area or contract work down to S to save tokens: only the user may override the tier. A smaller team never removes review or verification: every tier, including S, ends with the coordinator running `may-verify.sh`, except planning-only work, which ends with human plan acceptance.
 
@@ -33,8 +35,9 @@ Route by the decision or output needed, not technology names alone. A small back
 The team header is the first line of your first plan message and of your final report, naming each role and how it takes part:
 
 ```text
-Tier: S | Team: Tech Lead (coordinator) · Backend (inline) | Review: Tech Lead lens, self-review (not independent)
-Tier: M | Team: Tech Lead (coordinator) · may-backend (planned) · may-tech-lead (reviewer, planned) | Review: pending
+Tier: S | Team: Tech Lead (coordinator, model: harness default) · Backend (inline) | Review: Tech Lead lens, self-review (not independent)
+Tier: M | Team: Tech Lead (coordinator) · may-backend (planned) · may-frontend (planned) · may-tech-lead (reviewer, planned) | Review: pending
+Tier: L | Team: Tech Lead (coordinator) · may-backend (planned) · may-frontend (planned) · may-security (reviewer, planned) | Review: pending
 ```
 
 Update a worker's state (planned, started, done, blocked) only when it actually changes. Inline lenses are not processes; planned or failed dispatch is not completed delegation. A fallback that changes the tier or review independence must be disclosed and, when material, resolved with the user.
@@ -51,11 +54,29 @@ Present the team header, an objective and a coherent deliverable, then these lin
 | T2 | may-tech-lead (review) | Every T1 source/test delta, read-only | T1 | Candidate changes and criteria | Explicit acceptance or scoped findings | AC1 |
 | T3 | Coordinator with QA lens | Exact checks and authorized environment | Current T2 acceptance | Accepted source/tests and fixtures | Criterion evidence, including failures and gaps | AC1 |
 
+Example tier L flow (paths and criteria are filled from the actual plan):
+
+| Task ID | Role | Files / allowed actions | Depends on | Inputs | Output / Definition of Done | Criteria |
+|---|---|---|---|---|---|---|
+| T1 | may-backend | API files | None | Requirements | API contract and critical features | API criteria |
+| T2 | may-ui-ux | Design | None | Requirements | Design, in parallel with T1 | UX criteria |
+| T3 | may-frontend | UI files | T1, T2 | T1 contract, T2 design | UI built against the contract | UI criteria |
+| T4 | may-qa | Acceptance tests | T3 | UI and criteria | Acceptance tests | Acceptance criteria |
+| T5 | may-security | Read-only review | T1, T3 | API and UI | Auth and data findings | Security criteria |
+
+Return findings to the same implementer and back through review; the repair limit below applies.
+
+When one area consumes another's interface, fix the contract (request and response shapes, errors, and auth) in the plan before dispatch, or make it the first task. Consumers build against that contract or a mock without waiting for the full provider.
+
 | Criterion ID | Observable outcome | Exact check command or human action | Scope / evidence required |
 |---|---|---|---|
 | AC1 | Concrete behavior a check can disprove | Repository regression command, or `human`: explicit action and expected result | Named scenario, target, and failure signal |
 
 The deliverables must compose into the stated outcome. Allowed actions describe agreed scope; this advisory plan does not enforce permissions. Reject “works” and always-successful checks. Say when one command covers multiple criteria. Planning-only deliverables use explicit human review actions and checkable plan criteria; do not run application tests or invent a MAY VERIFY command to verify prose. Label checks for proposed future work as planned, not executed evidence.
+
+For tier M and L, include one worker table in the plan with role, task, harness (native or the named bridged harness), and model (`harness default` when not visible). With plan acceptance, ask once whether to keep it, change a model, or bridge a worker; Enter or “ok” keeps it. Choices apply only to this run; use `may-config` for durable per-role choices. Tier S asks nothing and names the coordinator's model in its header.
+
+Pass only a model the user named, through the per-dispatch field: Claude Code `Agent` `model`, Codex `spawn_agent` `model`, or Oh My Pi `task` `model` only when `task.perCallModel` is enabled. Check the live Pi and pi-subagents schema for a confirmed field. If per-worker model selection is unavailable, say so and offer a bridged harness or `may-config`; never change settings or bypass permissions.
 
 Only a **complex or risky plan** needs a fresh read-only plan critic, normally `may-pm` or `may-tech-lead`. Brief it on accepted decisions, scope, task dependencies, risks, and criteria; ask for material gaps, contradictions, and disproving checks, not another design. Resolve findings before execution. Without native delegation, perform and disclose a non-independent self-check. Simple plans get an inline self-check. Plan critique does not replace implementation review.
 
@@ -69,13 +90,23 @@ Only a **complex or risky plan** needs a fresh read-only plan critic, normally `
 
 Before dispatch, inspect the current harness mapping and live tool schema, observable native defaults, and permissions. Report unavailable or unknown capabilities honestly: an exposed tool or configured default does not prove provider authentication will succeed. Do not spawn probe workers, change configuration, select another model, or automatically retry to establish readiness.
 
-Only the coordinator dispatches role workers. Dispatch each worker by its role name, using the first of these the live dispatch schema offers:
+The coordinator dispatches role workers, except a [bridged lead](#bridged-leads) may dispatch its own leaves. Dispatch each worker by its role name, using the first of these the live dispatch schema offers:
 
 1. The project agent `may-<role>`, which carries the user's chosen model from `may-config`.
 2. The agent MAY ships for that role, as named in the harness mapping.
 3. The native default worker, with a brief that starts `You are may-<role>` and tells it to load the `may-<role>` skill. Disclose this fallback in the team header.
 
-Dispatch into a fresh context and keep one writer per checkout: one at a time, except [parallel writers](#parallel-writers). Include the objective, assigned task, exact files, decisions, prior results, the session folder path, and required invocation inputs in the brief. Carry every applicable user criterion without losing exact contract details: literal output shapes, names, values, errors, and edge cases. Give implementers and reviewers the original relevant wording or a faithfully complete extract, with a resolvable source when available; the reviewer must compare the candidate against that wording, not only an implementer's summary. Never forward the coordinator's chat history or paste repository file contents the worker can read itself; give paths and the relevant decisions instead. Reuse an active native execution/team mode such as Vibe; do not add a second agent manager, delegation package, or role-starting runner.
+Include the objective, assigned task, exact files, decisions, prior results, the session folder path, and required invocation inputs in each brief. Carry every applicable user criterion without losing exact contract details: literal output shapes, names, values, errors, and edge cases. Give implementers and reviewers the original relevant wording or a faithfully complete extract, with a resolvable source when available; the reviewer must compare the candidate against that wording, not only an implementer's summary. Never forward the coordinator's chat history or paste repository file contents the worker can read itself; give paths and the relevant decisions instead. Reuse an active native execution/team mode such as Vibe; do not add a second agent manager, delegation package, or role-starting runner.
+
+Dispatch every task whose dependencies are done; run independent read-only tasks in parallel and follow the [parallel writer rules](#parallel-writers) for concurrent writers. Wait only when the next task needs a result. Keep the full objective: a low budget does not mean completion or justify shrinking scope.
+
+Send repairs and follow-up steps to the same worker using the harness's native continuation to preserve context; dispatch fresh only if that worker is gone or continuation is unavailable. See the harness mapping for confirmed mechanisms and check the live tool list.
+
+Workers do not coordinate with each other: the coordinator holds the plan, contracts, and decisions, and synchronizes work through the plan, briefs, and result files rather than agent-to-agent messaging.
+
+### Bridged leads
+
+A worker in another harness is a full session and leads its workstream. It may use its harness's native delegation scaled to its task; its sub-agents are leaves, so depth stops at coordinator, bridged lead, leaf. The lead follows the [writer rules](#parallel-writers) inside its checkout and returns one role-contract result block in `result-<worker>.md`, including harness-reported usage for itself and each leaf or `unavailable`. Independent review and final verification remain with the coordinator.
 
 If dispatch fails or is denied, show the blocked action and actual worker outcome. Keep configured defaults and permissions intact; ask for the needed owner decision rather than silently switching tier or model or repeating a denied action. An explicitly approved recovery is limited to its authorized scope and must use a route the harness actually permits. If delegation is absent, disclose sequential execution and non-independent review before proceeding with that limitation.
 
@@ -89,14 +120,13 @@ A reviewer is read-only and assesses **every changed source and test delta** aga
 
 ### Parallel writers
 
-Tier L areas may run in parallel only when all of these hold:
+Tier M and L workstreams may run in parallel when they change disjoint files and the plan fixes their contract. Tier L chosen because areas touch the same files never runs in parallel.
 
-- The work is tier L because of phasing, size, or risk across areas. Tier L chosen because areas touch the same files never runs in parallel.
-- The areas change disjoint files, and the plan fixes the contract between them.
-- The live dispatch schema gives each worker its own checkout; see the harness mapping. MAY never creates worktrees itself or changes harness settings to get one.
-- `git status --short` is empty, because an isolated checkout starts from a commit and carries no uncommitted work. Do not commit, stash, or reset to get there; ask the user or stay sequential.
+**Shared checkout:** Record `git status --short` before dispatch. Assign each writer an explicit file list; each edits only those files and may run tests covering only its own files. Workers do not run formatters, linters, dependency installs, code generation, lockfile changes, or project-wide checks while writing. After all writers return, compare `git status --short` with the baseline for changes outside each worker's list, then review covers the combined delta and the coordinator runs final verification once.
 
-Record `git rev-parse HEAD` as the base before dispatch and give each worker the base, its files, and the session folder. Workers do not commit. When a worker returns, check that its checkout's `HEAD` equals the base; a mismatch voids that result, and the area reruns sequentially in the main checkout. Integrate one checkout at a time in the main checkout. `add -N` makes new files visible to the diff, and `git apply` applies the whole patch or nothing:
+**Isolated checkouts:** Use this form when a worker needs project-wide checks while editing. The live dispatch schema must give each worker its own checkout; see the harness mapping. MAY never creates worktrees itself or changes harness settings to get one. `git status --short` must be empty because an isolated checkout starts from a commit and carries no uncommitted work. Do not commit, stash, or reset to get there; ask the user or stay sequential.
+
+For isolated checkouts, record `git rev-parse HEAD` as the base before dispatch and give each worker the base, its files, and the session folder. Workers do not commit. When a worker returns, check that its checkout's `HEAD` equals the base; a mismatch voids that result, and the area reruns sequentially in the main checkout. Integrate one checkout at a time in the main checkout. `add -N` makes new files visible to the diff, and `git apply` applies the whole patch or nothing:
 
 ```bash
 git -C "$wt" add -N .
@@ -121,4 +151,4 @@ The verifier reports PASS, FAIL, NO_TESTS, TRIVIAL, CHANGED, or TIMEOUT. Outside
 
 Temporary work and evidence belong only in a folder created by `scripts/may-session.sh start`. It holds logs, artifacts, process identities, and an optional phase-reset `handoff.md`, not durable workflow state. Track background process IDs with that script. Stop **the exact session you created**, including failure or cancellation; use `--keep` only while diagnostics need inspection, then remove that known session. Never wildcard all `may-*` folders to capture or clean evidence. If cleanup fails, report the marked path for recovery. Attempt cleanup on cancellation, but do not promise traps survive a forced kill. Stale-folder sweep requires the age and process/group guards; it is separate recovery, not proof that this run cleaned its own session.
 
-Report in chat, in the user's language: the team header with final worker states; work performed; criterion/evidence table and actual verifier output; review findings/disposition; failed, stale, untested, blocked, or deferred work; human decisions; exact remaining temporary paths. Cleanup claims name only observed processes/folders. Start the next session from code and Git status, not restored MAY workflow state; a handoff path the user provides is a brief to recheck, not state to trust.
+Report in chat, in the user's language: the team header with final worker states; work performed; criterion/evidence table and actual verifier output; review findings/disposition; failed, stale, untested, blocked, or deferred work; human decisions; exact remaining temporary paths. List the tokens or cost reported by the harness for each worker (such as Claude Code stream-json `usage` or Oh My Pi Agent Hub or task usage); write `unavailable` when no number is reported and never estimate. Cleanup claims name only observed processes/folders. Start the next session from code and Git status, not restored MAY workflow state; a handoff path the user provides is a brief to recheck, not state to trust.

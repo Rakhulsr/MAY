@@ -294,3 +294,37 @@ test("a parent deadline stays bounded when auxiliary registration runs past the 
 		assert.equal(cleanup.status, 0, cleanup.stdout + cleanup.stderr);
 	}
 });
+
+test("the check timeout starts when the check command starts, not when MAY registers it", (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may slow registration ");
+	const started = join(tmp, "check-started");
+	const delayed = join(tmp, "registration-delayed");
+	const timing = join(tmp, "timing.sh");
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	// Delay only the pre-command registration, longer than the whole --timeout budget.
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ ! -e ${quote(started.replaceAll("\\", "/"))} ] && [ ! -e ${quote(delayed.replaceAll("\\", "/"))} ]; then touch ${quote(delayed.replaceAll("\\", "/"))}; sleep 5; fi\n`);
+	writeFileSync(join(dir, "fast.cjs"), `require('fs').writeFileSync(${JSON.stringify(started)},'started');console.log('# tests 1');`);
+	const out = spawnSync(bash, [script, "--check", "AC=node fast.cjs", "--timeout", "3"], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 60000,
+	});
+	assert.equal(existsSync(delayed), true, "the pre-command registration delay must run");
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+PASS/, out.stdout + out.stderr);
+});
+
+test("stalled initial registration is bounded independently of the check timeout", (t) => {
+	const dir = repo(t);
+	const tmp = tempDir(t, "may stalled registration ");
+	const started = join(tmp, "registration-started").replaceAll("\\", "/");
+	const timing = join(tmp, "timing.sh");
+	const quote = (s: string) => `'${s.replaceAll("'", "'\\''")}'`;
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ ! -e ${quote(started)} ]; then touch ${quote(started)}; sleep 36; fi\n`);
+	writeFileSync(join(dir, "check.cjs"), "console.log('# tests 1');");
+	const out = spawnSync(bash, [script, "--check", "AC=node check.cjs", "--timeout", "60"], {
+		cwd: dir, env: { ...process.env, TMPDIR: tmp, BASH_ENV: timing }, encoding: "utf8", timeout: 90000,
+	});
+	assert.equal(existsSync(started), true, "registration must begin");
+	assert.equal(out.status, 1, out.stdout + out.stderr);
+	assert.match(out.stdout, /AC\s+TIMEOUT/);
+});

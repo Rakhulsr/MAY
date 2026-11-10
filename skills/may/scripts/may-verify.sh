@@ -3,6 +3,7 @@ set -euo pipefail
 usage() { printf 'Usage: may-verify.sh --check "ID=command" [--check "ID=command"] [--timeout seconds] [--show-output] [--log-dir existing-directory]\n' >&2; exit 2; }
 ids=() commands=() owners=() statuses=() codes=()
 seconds=600
+registration=30
 show_output=0
 log_dir=
 while [ "$#" -gt 0 ]; do
@@ -95,11 +96,13 @@ for ((i=0; i<${#ids[@]}; i++)); do
  [ "$owner" -eq "$i" ] || continue
  statuses[$i]=TRIVIAL; codes[$i]='-'
  trivial "${commands[$i]}" && continue
- rm -f "$work/timedout" "$work/cancel"
- "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
- # SECONDS is integer-valued; rounding up prevents terminating a check early.
- deadline=$((SECONDS+seconds+1))
+ rm -f "$work/timedout" "$work/cancel" "$work/started"
+ "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$2" ] && [ ! -e "$2/cancel" ] || exit 143; : > "$2/started"; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$session" "$work" "${commands[$i]}" >"$work/$i.log" 2>&1 & pid=$!
+ # The check's timeout starts with its command, so MAY's own process registration never uses it up.
+ # Registration gets a separate bounded allowance. SECONDS is integer-valued; rounding up prevents terminating a check early.
+ deadline=$((SECONDS+registration+1)); begun=0
  while kill -0 "$pid" 2>/dev/null; do
+  if [ "$begun" -eq 0 ] && [ -e "$work/started" ]; then begun=1; deadline=$((SECONDS+seconds+1)); fi
   if [ "$SECONDS" -ge "$deadline" ]; then touch "$work/timedout"; break; fi
   sleep 0.05
  done

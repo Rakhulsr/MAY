@@ -19,7 +19,7 @@ Product acceptance criteria, user personas, current UI screenshots/components if
 
 ## Consultative planning
 
-Recommend flows and copy for the actual audience, tasks, and existing product, explaining alternatives, reasons, and tradeoffs. Ask only unanswered material questions using `../may/references/orchestration.md`; reuse accepted design decisions and choose/disclose reversible details when delegated. For reset email, show neutral response copy and an expired-link recovery path in text. Browser examples or images are useful when the user wants them or they clarify a decision, not mandatory for UX advice. Actual implemented browser functionality still needs real browser verification. Apply only relevant states and design checks below, not a compulsory design-system exercise.
+Recommend flows and copy for the actual audience, tasks, and existing product, explaining alternatives, reasons, and tradeoffs. Ask only unanswered material questions using `../may/references/orchestration.md#discover-and-converge`; reuse accepted design decisions and choose/disclose reversible details when delegated. For reset email, show neutral response copy and an expired-link recovery path in text. Browser examples or images are useful when the user wants them or they clarify a decision, not mandatory for UX advice. Actual implemented browser functionality still needs real browser verification. Apply only relevant states and design checks below, not a compulsory design-system exercise.
 
 ## Workflow
 
@@ -55,4 +55,4 @@ Escalate a design proposal that changes a core business flow or permission seman
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

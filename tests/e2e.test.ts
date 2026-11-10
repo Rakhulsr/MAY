@@ -50,7 +50,7 @@ exit "$FAKE_EXIT"
 
 function run(f: Fixture, args: string[] = []) {
 	return spawnSync(bash, ["-c", `${f.command} "$@"`, "sh", "--session", f.dir, "--spec", "test.spec.js", ...args], {
-		cwd: f.cwd, env: f.env, encoding: "utf8", timeout: 15000,
+		cwd: f.cwd, env: f.env, encoding: "utf8", timeout: 60000,
 	});
 }
 
@@ -230,4 +230,18 @@ test ! -e ${quote(started)}
 		spawnSync(bash, [scripts + "may-session.sh", "stop", f.dir], { cwd: f.cwd, env: f.env, timeout: 15000 });
 		child.kill();
 	}
+});
+
+test("the server --wait starts when the server command starts, not when MAY registers it", async (t) => {
+	const f = setup(t);
+	const delayed = join(f.cwd, "registration-delayed").replaceAll("\\", "/");
+	const timing = join(f.cwd, "timing.sh");
+	// Delay only the first registration (the server launcher's), longer than the whole --wait budget.
+	writeFileSync(timing, `if [[ "$0" == *may-session.sh ]] && [ "\${1:-}" = track ] && [ ! -e ${quote(delayed)} ]; then touch ${quote(delayed)}; sleep 5; fi\n`);
+	f.env.BASH_ENV = timing;
+	const port = await freePort();
+	const out = run(f, ["--start", server(f, port), "--url", `http://127.0.0.1:${port}`, "--wait", "3"]);
+	assert.equal(existsSync(delayed), true, "the registration delay must run");
+	assert.equal(out.status, 0, out.stdout + out.stderr);
+	assert.match(out.stdout, /RESULT PASS/);
 });

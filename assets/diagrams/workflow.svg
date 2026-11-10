@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="500" height="536" viewBox="0 0 500 536" role="img" aria-labelledby="title description" color="#202020">
   <title id="title">MAY workflow</title>
-  <desc id="description">Goal and project context go to a coordinator for scope, criteria, and role selection. Direct work implements and self-reviews. Orchestrated work goes to an implementation worker, then read-only review, with a repair and re-review loop. Both routes reach acceptance checks on the reviewed candidate, then an evidence, gaps, and cleanup report. Arrows show sequence, not dispatch authority.</desc>
+  <desc id="description">Goal and project context go to a coordinator for scope, criteria, and role selection. Tier S implements inline and self-reviews with the Tech Lead lens. Tiers M and L go to named role workers, then read-only review, with a repair and re-review loop. Both routes reach acceptance checks on the reviewed candidate, then an evidence, gaps, and cleanup report. Arrows show sequence, not dispatch authority.</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
       <path d="M 2 2 L 10 6 L 2 10" fill="none" stroke="#777777" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -38,9 +38,9 @@
   </g>
   <g font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="18" text-anchor="middle" fill="currentColor">
     <rect x="101" y="135" width="62" height="26" rx="3" fill="#ffffff"/>
-    <text x="132" y="154">Direct</text>
+    <text x="132" y="154">Tier S</text>
     <rect x="264" y="135" width="126" height="26" rx="3" fill="#ffffff"/>
-    <text x="327" y="154">Orchestrated</text>
+    <text x="327" y="154">Tier M/L</text>
     <rect x="239" y="310" width="178" height="26" rx="3" fill="#ffffff"/>
     <text x="328" y="329">Repair + re-review</text>
     <rect x="389" y="340" width="88" height="26" rx="3" fill="#ffffff"/>

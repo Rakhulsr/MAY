@@ -39,10 +39,12 @@ trap 'exit 143' TERM
 set -m
 if [ -n "$start" ]; then
  command -v curl >/dev/null 2>&1 || { printf 'E2E FAIL: curl is required for server readiness\nRESULT FAIL\n'; exit 1; }
- "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$4" ] && [ ! -e "$4/cancel" ] || exit 143; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$start" "$run_dir" >"$dir/server.log" 2>&1 & server_pid=$!
- ready=0; deadline=$((SECONDS+seconds))
+ "$BASH" -c '"$BASH" "$1" track "$2" "$$" || exit; [ -d "$4" ] && [ ! -e "$4/cancel" ] || exit 143; : > "$4/server-started"; "$BASH" -c "$3"; code=$?; "$BASH" "$1" track "$2" "$$" || exit; exit "$code"' sh "$here/may-session.sh" "$dir" "$start" "$run_dir" >"$dir/server.log" 2>&1 & server_pid=$!
+ # --wait starts with the server command, so MAY's own process registration never uses it up; registration gets a bounded 30 s allowance.
+ ready=0; deadline=$((SECONDS+30+1)); begun=0
  while [ "$SECONDS" -lt "$deadline" ]; do
-  if curl --silent --fail --max-time 1 "$url" >/dev/null 2>&1; then ready=1; break; fi
+  if [ "$begun" -eq 0 ] && [ -e "$run_dir/server-started" ]; then begun=1; deadline=$((SECONDS+seconds+1)); fi
+  if [ "$begun" -eq 1 ] && curl --silent --fail --max-time 1 "$url" >/dev/null 2>&1; then ready=1; break; fi
   pid_alive "$server_pid" || break
   sleep 0.2
  done

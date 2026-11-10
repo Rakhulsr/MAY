@@ -19,8 +19,8 @@ Spawning a subagent answers who can do a task. MAY adds a shared contract for wh
 | Responsibility | Native delegation by itself | MAY's documented convention |
 |---|---|---|
 | Plan and handoff | The harness provides task dispatch; the caller supplies the brief | Goal, scope, dependencies, inputs, outputs, and observable criteria |
-| Team selection | Available workers and modes depend on the harness | Direct for small low-risk work; only justified roles otherwise; coordinator-only dispatch |
-| Review | Separation and review policy depend on the caller | Read-only review before final QA, repairs back to the same reviewer; disclosed self-review for Direct work |
+| Team selection | Available workers and modes depend on the harness | A team of named roles (`may-backend`, `may-tech-lead`, …) sized by S, M, or L tier; tier S works inline, only justified roles start as workers; coordinator-only dispatch |
+| Review | Separation and review policy depend on the caller | Read-only review before final QA, repairs back to the same reviewer; disclosed Tech Lead self-review for tier S |
 | Acceptance evidence | The caller decides what results establish completion | Exact criterion commands, current-candidate evidence, explicit failures and blocked checks |
 | Temporary work | Process and artifact handling depend on the tools and caller | Marked OS-temp sessions, retained failure diagnostics, exact-session cleanup |
 
@@ -99,11 +99,11 @@ See a [real verification-step example](skills/may/references/examples.md), with 
 
 ## Workflow
 
-![MAY workflow: a coordinator selects Direct implementation and self-review, or an implementation worker with a read-only review and repair loop. Both routes lead to acceptance checks, evidence, and cleanup.](assets/diagrams/workflow.svg)
+![MAY workflow: a coordinator picks tier S, implementing inline with Tech Lead self-review, or tier M/L, dispatching named role workers with a read-only review and repair loop. Both routes lead to acceptance checks, evidence, and cleanup.](assets/diagrams/workflow.svg)
 
 [Editable diagram source](assets/diagrams/workflow.svg)
 
-Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Orchestrated work keeps one writer at a time and uses a separate reviewer when delegation is available; the coordinator runs final verification itself, and a QA worker is started only to design missing tests or drive browser checks. Direct work uses non-independent self-review and must say so. Without delegation, tasks run sequentially with the same disclosure.
+Arrows show the work sequence, not permission to spawn workers: only the coordinator dispatches. One PM or Tech Lead coordinator applies both planning perspectives; roles are not a requirement to start every agent. Tier M and L dispatch named role workers, such as `may-backend` and `may-tech-lead`, keep one writer at a time, and use a separate reviewer when delegation is available. Tier S implements inline under the relevant role lens and uses a disclosed, non-independent Tech Lead self-review. In every tier the coordinator runs final verification itself; a QA worker is started only to design missing tests or drive browser checks. Without delegation, tasks run sequentially with the same disclosure.
 
 Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
 
@@ -123,6 +123,8 @@ Roles are responsibility profiles, not mandatory processes. They give advice gro
 | [may-security](skills/may-security/SKILL.md) | Threat modeling, auth, secrets, trust boundaries, and review |
 | [may-devops](skills/may-devops/SKILL.md) | Development environments, builds, CI, and deployment risk |
 | [may-config](skills/may-config/SKILL.md) | Per-role model choices in Claude Code, Oh My Pi, Codex, or Pi (pi-subagents) project agent files, written only after approval |
+
+Each role except `may-config` also ships as a worker agent in [`agents/`](agents/), named after the role and preloading its skill, so a dispatched worker appears as `may-backend` rather than a generic agent. Claude Code lists them as `may:may-<role>`. The package also declares them for Pi with pi-subagents, untested there so far. Oh My Pi and Codex plugins do not ship agents, so there the coordinator uses `may-config` project agents or the native default with a role brief.
 
 ## Requirements and limits
 

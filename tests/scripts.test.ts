@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test, type TestContext } from "node:test";
@@ -47,7 +47,7 @@ test("resolveBash honors MAY_BASH and fails closed instead of falling back to a 
 /** A disposable copy of the files that would be pushed, as its own Git repo. */
 function copy(t: TestContext): string {
 	const dir = tempDir(t, "may-copy-");
-	for (const item of ["scripts", "skills", "tests", ".claude-plugin", ".codex-plugin", ".agents", ".omp-plugin", ".version-bump.json", "package.json", "package-lock.json", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "CHANGELOG.md", "LICENSE", ".gitattributes", ".gitignore"]) {
+	for (const item of ["scripts", "skills", "agents", "tests", ".claude-plugin", ".codex-plugin", ".agents", ".omp-plugin", ".version-bump.json", "package.json", "package-lock.json", "AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "CHANGELOG.md", "LICENSE", ".gitattributes", ".gitignore"]) {
 		cpSync(join(root, item), join(dir, item), { recursive: true });
 	}
 	git(dir, "init", "-q", "-b", "main");
@@ -101,6 +101,45 @@ test("check-repo fails when a skill name does not match its folder", (t) => {
 	const out = run(dir, "scripts/check-repo.sh");
 	assert.notEqual(out.status, 0);
 	assert.match(out.stdout + out.stderr, /may-qa/);
+});
+
+test("every role skill has a plugin agent that preloads it", (t) => {
+	const dir = copy(t);
+	rmSync(join(dir, "agents/may-qa.md"));
+	const out = run(dir, "scripts/check-repo.sh");
+	assert.notEqual(out.status, 0);
+	assert.match(out.stdout + out.stderr, /may-qa/);
+});
+
+test("check-repo fails when an agent preloads another role's skill", (t) => {
+	const dir = copy(t);
+	const file = join(dir, "agents/may-qa.md");
+	writeFileSync(file, readFileSync(file, "utf8").replace("  - may-qa", "  - may-backend"));
+	const out = run(dir, "scripts/check-repo.sh");
+	assert.notEqual(out.status, 0);
+	assert.match(out.stdout + out.stderr, /agents\/may-qa\.md/);
+});
+
+for (const [label, change] of [
+	["names another role", (text: string) => text.replace("name: may-qa", "name: may-backend")],
+	["may dispatch other agents", (text: string) => text.replace(/^disallowedTools: Agent\r?\n/m, "")],
+] as const) {
+	test(`check-repo fails when an agent ${label}`, (t) => {
+		const dir = copy(t);
+		const file = join(dir, "agents/may-qa.md");
+		writeFileSync(file, change(readFileSync(file, "utf8")));
+		const out = run(dir, "scripts/check-repo.sh");
+		assert.notEqual(out.status, 0);
+		assert.match(out.stdout + out.stderr, /agents\/may-qa\.md/);
+	});
+}
+
+test("check-repo fails on an agent without a role skill", (t) => {
+	const dir = copy(t);
+	cpSync(join(dir, "agents/may-qa.md"), join(dir, "agents/may-ghost.md"));
+	const out = run(dir, "scripts/check-repo.sh");
+	assert.notEqual(out.status, 0);
+	assert.match(out.stdout + out.stderr, /may-ghost/);
 });
 
 test("check-repo fails when a skill has no description", (t) => {

@@ -23,7 +23,7 @@ Recommend the least complex viable approach after inspecting existing contracts.
 
 ## Coordinator or worker
 
-When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe, with one writer and one layer of leaf workers; do not create a second manager. Orchestrated work still needs read-only review acceptance before QA. When assigned a technical worker task, return the scoped result to the coordinator without spawning a team.
+When assigned as coordinator, apply PM and Tech Lead planning lenses in the current context and justify only the workers this task needs, never the full eight-role roster. Use native delegation or active Vibe, with one writer and one layer of leaf workers; do not create a second manager. Tier M and L work still needs read-only review acceptance before QA, and tier S a disclosed Tech Lead self-review. When assigned a technical worker task, return the scoped result to the coordinator without spawning a team.
 
 ## Workflow
 
@@ -59,4 +59,4 @@ Escalate irreversible data-model changes, API-breaking proposals, risky migratio
 
 ## MAY operating contract and handoff
 
-Before acting, including when this profile is loaded standalone, read and follow the [shared role contract and handoff rules](../may/references/orchestration.md). Return the assigned result to the coordinator under that contract.
+Before acting, including when this profile is loaded standalone, read and follow the [MAY role contract](../may/references/role-contract.md). Return the assigned result to the coordinator under that contract.

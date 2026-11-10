@@ -29,18 +29,23 @@ Observed dispatch to a project `may-<role>` agent with its configured model on C
 
 ## Agent file body
 
-Keep the body short so the agent's base context stays small:
+Start from MAY's own agent for that role in the installed package's `agents/may-<role>.md`, and add only the model fields, so the project agent keeps the role name, skill preload, and short body:
 
 ```markdown
 ---
 name: may-backend
-description: MAY backend worker. Use only when the MAY coordinator dispatches a backend task.
+description: MAY Backend Engineer for backend or server-side work. Use only when the MAY coordinator dispatches a task to this role.
 model: <user-chosen value>
+skills:
+  - may-backend
+disallowedTools: Agent
 ---
 
-Load the MAY `may-backend` role skill (a plugin may list it with a namespace, such as `may:may-backend`) and the shared MAY role contract, then perform only the assigned task and return the contract's result shape.
+You are may-backend, the Backend Engineer on a MAY engineering team. The may-backend skill is preloaded; if it is not in your context, load it. Follow the MAY role contract it links, do only the task the coordinator assigns, never dispatch other agents, and start your result with `ROLE: may-backend`.
 ```
+
+`skills` and `disallowedTools` are Claude Code fields; pi-subagents reads `skills` too. For Oh My Pi, keep only the fields its documentation lists.
 
 For Codex, put the same instruction in `developer_instructions` and keep the TOML keys the documentation lists.
 
-The coordinator dispatches to `may-<role>` when such an agent exists, per the harness mapping; otherwise it uses the native default. Configured models never change the tier, review, or verification rules.
+The coordinator dispatches to the project `may-<role>` when it exists, then to MAY's packaged role agent, then to the native default, per the harness mapping. Configured models never change the tier, review, or verification rules.

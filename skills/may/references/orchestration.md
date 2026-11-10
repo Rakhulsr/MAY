@@ -91,6 +91,7 @@ A reviewer is read-only and assesses **every changed source and test delta** aga
 
 Tier L areas may run in parallel only when all of these hold:
 
+- The work is tier L because of phasing, size, or risk across areas. Tier L chosen because areas touch the same files never runs in parallel.
 - The areas change disjoint files, and the plan fixes the contract between them.
 - The live dispatch schema gives each worker its own checkout; see the harness mapping. MAY never creates worktrees itself or changes harness settings to get one.
 - `git status --short` is empty, because an isolated checkout starts from a commit and carries no uncommitted work. Do not commit, stash, or reset to get there; ask the user or stay sequential.

@@ -1,6 +1,6 @@
-# Token benchmark: MAY 0.2.0 and 0.3.0 on Claude Code
+# Token benchmark: MAY 0.2.0 and 0.3.0
 
-Recorded 2026-11-09 with the protocol in [README.md](README.md). One run per cell: each number is one observation, not an average.
+The first section records Claude Code runs from 2026-11-09. The later sections cover additional Claude Code and Oh My Pi runs. Each result states its run count and limits; none proves that one MAY version is universally more efficient.
 
 ## Setup
 
@@ -39,7 +39,55 @@ Cost is the `total_cost_usd` Claude Code reported for the run.
 
 ## Limitations
 
-- One harness, one model, one run per cell. Oh My Pi runs are blocked: OMP has no per-session plugin directory, and an isolated profile needs an interactive login that was not available.
+- These six runs cover one harness and one model, with one run per cell. OMP was blocked during this batch; later OMP observations appear below.
 - Print mode cannot answer permission prompts, so an explicit tool allowlist replaced interactive approval. Interactive sessions may differ.
 - `~/.claude/CLAUDE.md` user instructions still loaded in every run; they were the same for both versions.
 - The fixtures are small. Savings from keeping coordinator context small, if any, are expected in long multi-phase sessions, which this benchmark does not cover.
+
+## Tiered team with named role agents (2026-11-10)
+
+Second round, Claude Code 2.1.322, model `claude-sonnet-5-5`, `--plugin-dir` export, `--setting-sources project,local`, explicit `--allowedTools` in disposable projects. Three runs per cell, all in one turn, all oracles PASS. `weighted` counts input-equivalent tokens (cache read 0.1, cache write 1.25, output 5). Baseline is 0.3.0 at `f7329e4`; candidate is the uncommitted tiered-team change (single S/M/L mode, `agents/may-<role>.md`, split guidance).
+
+| Scenario | Version | Run totals | Median total | Median weighted | Median cost | Workers |
+|---|---|---|---:|---:|---:|---|
+| B-S | 0.3.0 | 131,316 / 198,812 / 199,238 | 198,812 | 62,629 | $0.145 | none |
+| B-S | candidate | 177,271 / 183,907 / 185,158 | 183,907 | 52,218 | $0.118 | none |
+| B-M | 0.3.0 | 138,209 / 138,750 / 153,993 | 138,750 | 50,852 | $0.115 | none |
+| B-M | candidate | 110,320 / 149,004 / 229,601 | 149,004 | 58,998 | $0.139 | none |
+| B-L | 0.3.0 | 495,473 / 846,885 / 1,461,468 | 846,885 | 210,619 | $0.406 | 4 `Explore` in one run |
+| B-L | candidate | 873,594 / 1,073,041 / 1,216,373 | 1,073,041 | 324,866 | $0.618 | 4 `may:may-tech-lead` reviews in two runs |
+
+Observations:
+
+- B-S cost fell about 19% at the median, and the three runs were closer together. The candidate's coordinator reads less guidance per call.
+- In B-L the coordinator dispatched the named reviewer `may:may-tech-lead` once per phase in two of three runs, and each result started `ROLE: may-tech-lead`. This is the first observed named role worker; the baseline only used generic `Explore`. Those independent reviews account for most of the B-L cost increase (worker tokens 166k and 260k).
+- No run dispatched a named implementer. B-M (four areas, one contract) and B-L stayed inline, so tier selection still under-sizes multi-area work.
+- The team header appeared in the coordinator's text in only two of nine candidate runs, both B-S.
+- With three runs per cell and wide spread, these are directional observations, not significant differences.
+
+## Oh My Pi: B-M on GPT-6.1 Terra (2026-11-10)
+
+These are individual observations, not averages. Both coordinators used OMP 18.18.6, `openai-codex/gpt-6.1-terra`, and medium reasoning in separate disposable projects. The two initial runs overlapped. Tokens include input, cache reads, cache writes, and output, including worker sessions. The OMP-reported costs below are estimates, not verified billing amounts.
+
+| Run | MAY source | Result | Coordinator tokens | Worker tokens | Total tokens | Time | Reported cost |
+|---|---|---|---:|---:|---:|---:|---:|
+| O1 | Installed 0.2.0 | Oracle PASS; self-review | 458,792 | 0 | 458,792 | 97 s | $0.0691 |
+| O2 | Working-tree 0.3.0 at `3acbdef` | Oracle FAIL; independent review | 544,351 | 192,644 | 736,995 | 176 s | $0.1654 |
+| O3 | Same 0.3.0 plus uncommitted handoff guidance | Oracle PASS; self-review | 259,550 | 0 | 259,550 | 136 s | $0.0582 |
+
+O2's tests passed, but the independent oracle found that its rendered tag items omitted the required `class="tag"`. The implementer brief omitted that exact requirement. The later guidance asks coordinators to preserve literal contract details in implementer and reviewer briefs and to map criteria to checks.
+
+O3 did not dispatch workers: the coordinator reported that the harness's delegation gate conflicted with MAY's tier-M instruction. Its pass therefore does not test the changed handoff guidance. O2's two workers used high reasoning while its coordinator and the other runs used medium; this is not a controlled reasoning-level comparison. Each cell has one observation, O3 ran separately, and these small tasks cannot establish token savings. No Luna results are included.
+
+The OMP runs used `--plugin-dir`, `--profile may-benchmark`, print mode, `--no-prewalk`, `--max-time 15m`, and `--max-cost 2`. Actual tool permissions remained under the harness. The benchmark runner inspected the oracle failure and then removed its owned temporary sessions, including raw logs; the OMP figures above cannot be independently recounted from retained logs. One malformed-prompt attempt was cancelled and is excluded from these rows and costs.
+
+### OMP long scenario
+
+The B-L prompt runs four phases on the notes fixture. These two runs used the same OMP version, Terra model, coordinator reasoning, prompt, and isolated profile as the B-M runs. They ran at the same time, with a 15-minute and $2 limit per run. The 0.3.0 candidate included the uncommitted handoff guidance.
+
+| MAY | Independent oracle | Coordinator tokens | Worker tokens | Total tokens | Coordinator peak context | Time | Reported cost |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 0.2.0 | PASS | 1,013,975 | 0 | 1,013,975 | 43,015 | 191 s | $0.1182 |
+| 0.3.0 candidate | PASS | 2,481,749 | 1,213,947 | 3,695,696 | 47,681 | 686 s | $0.4116 |
+
+The baseline used self-review. The candidate used workers and reported review and repair across phases; its worker logs included high reasoning while the coordinator used medium. These runs did different amounts of review and are single observations, so the token, time, and reported-cost differences cannot be attributed solely to MAY version. Neither peak context approached the 770k–930k motivating sessions, so this result does not establish the effect of a phase reset on those sessions. Reported cost is the sum of usage estimates in the OMP logs, not a verified bill.

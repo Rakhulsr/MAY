@@ -16,16 +16,16 @@ Launch another harness only when the user chooses it, and never open a new OS wi
 
 Codex runs OpenAI models and Claude Code runs Anthropic models; other models there need external configuration. Oh My Pi and Pi can route to providers the user has authenticated, so a different model per role there comes from `may-config` or a per-dispatch choice, not a bridge.
 
-A bridged implementer starts only when the user chooses it at the [team gate](orchestration.md#readiness-and-chat-plan). It follows the [bridged lead contract](orchestration.md#bridged-leads).
+A bridged implementer starts only when the user chooses it at the [team gate](orchestration.md#readiness-and-chat-plan). Bridged writers and reviewers use the same [batch scope and fresh reviewer snapshot sequence](orchestration.md#parallel-writers) as native workers.
 
-For a pane run, write the brief in the session folder, including the [role contract](role-contract.md) result shape. Tell a writer to write `result-<worker>.md` there as its last step; for a read-only reviewer, the coordinator saves its result block there instead. Open the normal interactive TUI with `may-bridge.sh open`, giving the brief path as the first prompt and a model only as the user named it. Never use auto-approve or yolo flags; the user answers permission prompts in the pane.
+For a pane run, write the brief in the session folder, including the [role contract](role-contract.md) result shape. A bridged lead's result must also list each dispatched leaf's role, model, and usage, or `none`. Tell a writer to write `result-<worker>.md` there as its last step; for a read-only reviewer, the coordinator saves its result block there instead. Open the normal interactive TUI with `may-bridge.sh open`, giving the brief path as the first prompt and a model only as the user named it. Never use auto-approve or yolo flags; the user answers permission prompts in the pane.
 
 ```bash
 bash "$MAY_SKILL_DIR/scripts/may-bridge.sh" host
 bash "$MAY_SKILL_DIR/scripts/may-bridge.sh" open pi "Read the brief at $session/brief.md"
 ```
 
-`host` prints `herdr`, `zellij`, `tmux`, `herdr-app`, `wezterm`, `windows-terminal`, `vscode`, `zed`, or `none`; `MAY_HOST` overrides detection. `open` prints the host pane handle. In Herdr, the program must be a bare word and no argument may contain a single quote or line break (exit `2`). Read the pane for startup dialogs and let the user answer them. Wait for the result file, then check `git status --short` and the diff yourself; pane text is not evidence. Close the pane using the host's commands.
+`host` prints `herdr`, `zellij`, `tmux`, `herdr-app`, `wezterm`, `windows-terminal`, `vscode`, `zed`, or `none`; `MAY_HOST` overrides detection. `open` prints the host pane handle. In Herdr, the program must be a bare word and no argument may contain a single quote or line break (exit `2`). Read the pane for startup dialogs and let the user answer them. Wait for the result file, then check `git status --short` and the diff yourself; pane text is not evidence of changes. Read the result and the pane's usage display before closing the pane using the host's commands.
 
 If no pane host is available or `open` exits `3` or `1`, tell the user why and use headless fallback. A headless reviewer runs as below; ask the user before a headless writer because it cannot answer permission prompts and MAY never bypasses them. While any headless run is active, tell the user what runs where and the session log path.
 
@@ -45,7 +45,7 @@ A reviewer from another harness, usually backed by a different model, is less li
 
 Wrap each in `timeout`, and redirect stdout and stderr to `review-<harness>.out` and `.err` in the session folder. Add no model flag the user did not name.
 
-3. Read only the result block. Treat the findings as claims: confirm each one against the code before acting on it. Check `git status --short` afterwards; a reviewer that changed files fails the review, whatever it reports.
+3. Read only the result block. Treat the findings as claims: confirm each one against the code before acting on it. A reviewer that changed files fails the review, whatever it reports.
 4. Record the review as independent, naming the harness and, when its output reports one, the model. Return repairs to the same harness. If the run fails, times out, or hits an authentication or quota error, report the review as blocked and ask the user before falling back to a native reviewer.
 
 ## Validation

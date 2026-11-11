@@ -118,7 +118,7 @@ For a user-directed ideation handoff or independent critique, ask MAY to use the
 When you ask for it, MAY can also hand work to another harness:
 
 - **Cross-harness workers:** choose a reviewer or implementer at the team gate. The coordinator prefers a visible pane, checks the returned result against the checkout, and uses headless fallback when a pane is unavailable; a headless writer requires your approval. See [the bridge](skills/may/references/ideation-bridge.md#launching-another-harness).
-- **Visible panes:** `may-bridge.sh host` detects the terminal host and `may-bridge.sh open <program> [args...]` opens its pane or tab instead of a new window. You answer permission prompts there. A review sends the criteria and diff to the named harness's provider.
+- **Visible panes:** `may-bridge.sh harnesses` lists harness commands on PATH; `may-bridge.sh host` detects the terminal host and `may-bridge.sh open <program> [args...]` opens its pane or tab instead of a new window. You answer permission prompts there. A review sends the criteria and diff to the named harness's provider.
 
 See a [real verification-step example](skills/may/references/examples.md), with its exact observed output and limits.
 
@@ -141,6 +141,8 @@ Only you can move work to a smaller tier. Long work can end a phase with a `hand
 The coordinator dispatches workers; [bridged leads](skills/may/references/orchestration.md#bridged-leads) can dispatch their own leaf workers. Tier M and L workstreams can use [parallel writers](skills/may/references/orchestration.md#parallel-writers) on disjoint files in a shared or isolated checkout; read-only workers can run alongside them. At plan acceptance you see each worker's role, task, harness, and model and can keep or change the per-run team. Repairs return to the same worker when native continuation is available, and reports list harness-reported worker usage or `unavailable`. Tier S implements inline with disclosed Tech Lead self-review; the coordinator runs final verification in every tier. Without delegation, tasks run sequentially with the same disclosure.
 
 Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
+
+`may-session.sh snapshot <dir>` records the checkout baseline; `scope <dir> [path...]` reports changes outside the listed paths. The [runtime guide](skills/may/references/runtime.md) describes the scripts.
 
 ## Skills
 

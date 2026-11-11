@@ -207,6 +207,18 @@ function stub(bin: string, name: string, output = "", status = 0) {
 	chmodSync(file, 0o755);
 }
 
+test("harnesses reports only installed commands in order", (t) => {
+ const bin = tempDir(t);
+ stub(bin, "pi"); stub(bin, "claude");
+ const found = runHost(bin, bin, { PATH: bin }, "harnesses");
+ assert.equal(found.status, 0, found.stderr);
+ assert.equal(found.stdout.replaceAll("\r\n", "\n"), "claude\npi\n");
+ rmSync(join(bin, "pi")); rmSync(join(bin, "claude"));
+ const none = runHost(bin, bin, { PATH: bin }, "harnesses");
+ assert.equal(none.status, 0, none.stderr);
+ assert.equal(none.stdout, "");
+});
+
 function calls(bin: string) {
 	const log = join(bin, "calls.log");
 	return existsSync(log) ? readFileSync(log, "utf8").split("@@end\n").filter(Boolean).map((c) => c.trimEnd().split("\n")) : [];

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { chmodSync, existsSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { bash, tempDir } from "./helpers.ts";
@@ -225,7 +225,7 @@ test("harnesses --models lists user-visible models and marks failed listings", (
 	stub(bin, "pi", "Provider Model Context\nopenai-codex gpt-6-luna 128k\nanthropic claude-sonnet 200k");
 	stub(bin, "claude");
 	stub(bin, "codex");
-	const found = runHost(bin, bin, { PATH: bin }, "harnesses", "--models");
+	const found = runHost(bin, bin, { PATH: `${bin}${delimiter}${process.env.PATH}` }, "harnesses", "--models");
 	assert.equal(found.status, 0, found.stderr);
 	assert.equal(found.stdout.replaceAll("\r\n", "\n"), [
 		"claude\topus",
@@ -240,7 +240,7 @@ test("harnesses --models lists user-visible models and marks failed listings", (
 	].join("\n"));
 
 	stub(bin, "omp", "", 1);
-	const failed = runHost(bin, bin, { PATH: bin }, "harnesses", "--models");
+	const failed = runHost(bin, bin, { PATH: `${bin}${delimiter}${process.env.PATH}` }, "harnesses", "--models");
 	assert.equal(failed.status, 0, failed.stderr);
 	assert.match(failed.stdout.replaceAll("\r\n", "\n"), /(?:^|\n)omp\t-\n/);
 });

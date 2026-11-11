@@ -100,7 +100,7 @@ Include the objective, assigned task, exact files, decisions, prior results, the
 
 Dispatch every task whose dependencies are done; run independent read-only tasks in parallel and follow the [parallel writer rules](#parallel-writers) for concurrent writers. Wait only when the next task needs a result. Keep the full objective: a low budget does not mean completion or justify shrinking scope.
 
-Send repairs and follow-up steps to the same worker using the harness's native continuation to preserve context; dispatch fresh only if that worker is gone or continuation is unavailable. See the harness mapping for confirmed mechanisms and check the live tool list.
+Send repairs and follow-up steps to the same worker using the harness's native continuation to preserve context; dispatch fresh only if that worker is gone or continuation is unavailable. A repair is a writer dispatch: snapshot before it, `scope` with its files after it, and a fresh snapshot before re-review. For a pane worker, write the follow-up to a file in the session folder and send only `Read and follow <path>`, so quotes and line breaks never pass through the terminal. See the harness mapping for confirmed mechanisms and check the live tool list.
 
 Workers do not coordinate with each other: the coordinator holds the plan, contracts, and decisions, and synchronizes work through the plan, briefs, and result files rather than agent-to-agent messaging.
 

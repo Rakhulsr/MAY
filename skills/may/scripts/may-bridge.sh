@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
- printf 'Usage: may-bridge.sh validate <packet.json>\n       may-bridge.sh host\n       may-bridge.sh harnesses\n       may-bridge.sh open <program> [args...]\n' >&2
+ printf 'Usage: may-bridge.sh validate <packet.json>\n       may-bridge.sh host\n       may-bridge.sh harnesses [--models]\n       may-bridge.sh open <program> [args...]\n' >&2
  exit 2
 }
 
@@ -77,7 +77,47 @@ open_pane() {
 }
 
 case ${1:-} in
- harnesses) [ "$#" -eq 1 ] || usage; for harness in claude codex omp pi; do if command -v "$harness" >/dev/null 2>&1; then printf '%s\n' "$harness"; fi; done; exit 0 ;;
+ harnesses)
+  if [ "$#" -eq 1 ]; then
+   for harness in claude codex omp pi; do
+    if command -v "$harness" >/dev/null 2>&1; then printf '%s\n' "$harness"; fi
+   done
+   exit 0
+  fi
+  [ "$#" -eq 2 ] && [ "$2" = --models ] || usage
+  for harness in claude codex omp pi; do
+   command -v "$harness" >/dev/null 2>&1 || continue
+   case $harness in
+    claude) printf 'claude\topus\nclaude\tsonnet\nclaude\thaiku\n' ;;
+    codex) printf 'codex\t-\n' ;;
+    omp)
+     if ! models=$(omp models --json); then
+      printf 'omp\t-\n'
+     else
+      selectors=$(printf '%s\n' "$models" | grep -oE '\{[^}]*"kind"[[:space:]]*:[[:space:]]*"chat"[^}]*\}' | grep -oE '"selector"[[:space:]]*:[[:space:]]*"[^"]+"' | cut -d '"' -f 4 || true)
+      if [ -n "$selectors" ]; then
+       while IFS= read -r model; do printf 'omp\t%s\n' "$model"; done <<<"$selectors"
+      else
+       printf 'omp\t-\n'
+      fi
+     fi
+     ;;
+    pi)
+     if ! models=$(pi --list-models); then
+      printf 'pi\t-\n'
+     else
+      count=0
+      while read -r provider model _; do
+       count=$((count + 1))
+       [ "$count" -eq 1 ] && continue
+       [ -n "$provider" ] && [ -n "$model" ] && printf 'pi\t%s/%s\n' "$provider" "$model"
+      done <<<"$models"
+     fi
+     ;;
+   esac
+  done
+  exit 0
+  ;;
  host) [ "$#" -eq 1 ] || usage; detect_host; exit 0 ;;
  open) shift; { [ "$#" -ge 1 ] && [ -n "$1" ]; } || usage; open_pane "$@"; exit 0 ;;
  validate) { [ "$#" -eq 2 ] && [ -n "$2" ]; } || usage ;;

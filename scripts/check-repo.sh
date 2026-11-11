@@ -64,7 +64,7 @@ for (const entry of readdirSync("skills", { withFileTypes: true })) {
 
 // Each role skill ships a same-named plugin agent that preloads exactly that skill.
 for (const entry of readdirSync("skills", { withFileTypes: true })) {
-	if (!entry.isDirectory() || !/^may-/.test(entry.name) || entry.name === "may-config") continue;
+	if (!entry.isDirectory() || !/^may-/.test(entry.name) || ["may-config", "may-turbo"].includes(entry.name)) continue;
 	const file = `agents/${entry.name}.md`;
 	if (!existsSync(file)) {
 		fail(`${entry.name} has no ${file}`);

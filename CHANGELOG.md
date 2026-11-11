@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (unreleased)
+## 0.4.0
 
 - Add session `snapshot` and `scope` checks for worker changes and `may-bridge.sh harnesses` to list harness commands on PATH.
 - Add `may-turbo` for cross-harness teams and `may-bridge.sh harnesses --models` for CLI-reported model maps; MAY asks the user to choose each worker's harness and model before dispatch. In a real run, an Oh My Pi 18.18.8 coordinator (`openai-codex/gpt-6-luna`) showed the model map, asked per worker, rejected a bridged choice without a model, then ran backend and frontend as Oh My Pi `gpt-6-luna` panes with scope checks, one review repair returned to the same worker and re-reviewed, `may-verify`, and pane-reported tokens per worker.

@@ -6,11 +6,11 @@
 
 Workflow skills for coding agents.
 
-MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships eleven skills and four Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
+MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships eleven skills and four Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator, relevant workers, and, when you ask, workers running in other harnesses.
 
 Your harness still controls models, accounts, tools, permissions, and delegation. MAY supplies written guidance and deterministic scripts, not a workflow engine or sandbox.
 
-[Why MAY](#why-may) · [Install](#install) · [Start a task](#start-a-task) · [Workflow](#workflow) · [Skills](#skills) · [Runtime guide](skills/may/references/runtime.md) · [Contributing](CONTRIBUTING.md)
+[Why MAY](#why-may) · [Install](#install) · [Start a task](#start-a-task) · [Workflow](#workflow) · [Cross-harness teams](#cross-harness-teams) · [Skills](#skills) · [FAQ](#faq) · [Runtime guide](skills/may/references/runtime.md) · [Contributing](CONTRIBUTING.md)
 
 ## Why MAY
 
@@ -25,24 +25,6 @@ Spawning a subagent answers who can do a task. MAY adds a shared contract for wh
 | Temporary work | Process and artifact handling depend on the tools and caller | Marked OS-temp sessions, retained failure diagnostics, exact-session cleanup |
 
 A native workflow can implement these same patterns. MAY packages the conventions; advisory skills do not automatically enforce them.
-
-### Exploratory benchmark
-
-One local Windows session-safety task compared MAY 0.2.0 with OMP Vibe without the MAY workflow. Both candidates passed independent review and final QA. The numbers below are individual worker durations, not end-to-end times.
-
-| Measure | MAY | Vibe |
-|---|---:|---:|
-| Implementer worker (seconds) | 124 | 278 |
-| Reviewer worker (seconds) | 62 | 75 |
-| QA worker (seconds) | 408 | 327 |
-| Session tests passed / total | 13 / 13 | 13 / 13 |
-| Full suite passed / total | 57 / 57 | 57 / 57 |
-
-Both repository checks exited 0. MAY used its verifier; Vibe ran checks directly, so their QA timings are not equivalent speed measurements. The base model reported for both paths was `openai-codex/gpt-6.1-terra`; Vibe used xhigh for implementation and review and medium for QA, while MAY reasoning levels were not recorded. Cache, run order and coordinator context can affect results. One task and one run per path do not establish superiority. Total tokens, cost and end-to-end time were unavailable.
-
-See the [detailed report](tests/benchmark/benchmark-0.2.0.md).
-
-A second, token-focused comparison of MAY 0.2.0 and 0.3.0 on Claude Code found no measurable difference: in six single runs, all passing their oracles, 0.3.0 run totals ranged from 4% lower to 24% higher. See the [0.3.0 token report](tests/benchmark/benchmark-0.3.0.md).
 
 ## Install
 
@@ -144,6 +126,17 @@ Every source and test repair returns to review before final QA. After two unsucc
 
 `may-session.sh snapshot <dir>` records the checkout baseline; `scope <dir> [path...]` reports changes outside the listed paths. The [runtime guide](skills/may/references/runtime.md) describes the scripts.
 
+## Cross-harness teams
+
+Ask for `may-turbo` when a tier M or L task would benefit from another harness or model:
+
+```text
+Use may-turbo to add rate limiting to the API. Show me the available
+harnesses and models, then let me pick each worker's harness and model.
+```
+
+The coordinator runs `may-bridge.sh harnesses --models`, shows what each CLI reports, and asks once for every planned worker's harness and model before dispatching anything. It never recommends or substitutes a model. Workers run in visible panes where the terminal host supports them, `scope` checks confirm each worker stayed in its files, a status board tracks progress, and the final report lists each worker's harness, model, and harness-reported usage or `unavailable`. See [the bridge](skills/may/references/ideation-bridge.md#launching-another-harness) and [the may-turbo skill](skills/may-turbo/SKILL.md).
+
 ## Skills
 
 Roles are responsibility profiles, not mandatory processes. They give advice grounded in the project and approved scope; Security and DevOps do not automatically add controls or infrastructure. UX consultation can use text.
@@ -163,6 +156,16 @@ Roles are responsibility profiles, not mandatory processes. They give advice gro
 | [may-turbo](skills/may-turbo/SKILL.md) | Cross-harness teams with user-selected harnesses and models |
 
 Each role except `may-config` also ships as a worker agent in [`agents/`](agents/), named after the role and preloading its skill, so a dispatched worker appears as `may-backend` rather than a generic agent. Claude Code lists them as `may:may-<role>`. The package also declares them for Pi with pi-subagents, untested there so far. Oh My Pi and Codex plugins do not ship agents, so there the coordinator uses `may-config` project agents or the native default with a role brief.
+
+## FAQ
+
+**Does MAY choose models?** No. The harness owns models and accounts. `may-config` and `may-turbo` write or apply only choices you make.
+
+**Does MAY keep state between sessions?** No. Plans and reports stay in chat or a temporary session folder. A fresh session starts from code and Git status.
+
+**Is every task a team job?** No. Tier S stays inline with disclosed self-review; only you can move work to a smaller tier.
+
+**Does MAY enforce permissions?** No. Skills are advisory; your harness enforces permissions. See [SECURITY.md](SECURITY.md).
 
 ## Requirements and limits
 

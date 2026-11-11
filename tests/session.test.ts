@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, symlinkSync, utimesSync, writeFileSync, chmodSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, utimesSync, writeFileSync, chmodSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
-import { bash, tempDir } from "./helpers.ts";
+import { bash, tempDir, git, gitRepo } from "./helpers.ts";
 const root = fileURLToPath(new URL("..", import.meta.url));
 const script = "skills/may/scripts/may-session.sh";
 const run = (tmp: string, ...args: string[]) => spawnSync(bash, [script, ...args], { cwd: root, encoding: "utf8", timeout: 15000, env: { ...process.env, TMPDIR: tmp } });
@@ -19,6 +19,70 @@ function fixture(tmp: string) {
  const dir = session(tmp, "may-process"); const pid = out.stdout.trim(); const tracked = run(tmp, "track", dir, pid); assert.equal(tracked.status, 0, tracked.stderr);
  return { dir, marker, pid };
 }
+test("snapshot and scope work without associative arrays", (t) => {
+ const repo = gitRepo(t); const tmp = tempDir(t, "may scope bash3 ");
+ writeFileSync(join(repo, "tracked.txt"), "base"); git(repo, "add", "."); git(repo, "commit", "-qm", "base");
+ const compat = join(tmp, "compat.sh");
+ writeFileSync(compat, 'declare() { case "$1" in -A|-gA) return 2;; *) builtin declare "$@";; esac; }\n');
+ const invoke = (...args: string[]) => spawnSync(bash, [join(root, script), ...args], { cwd: repo, encoding: "utf8", timeout: 15000, env: { ...process.env, TMPDIR: tmp, BASH_ENV: compat } });
+ const started = invoke("start"); assert.equal(started.status, 0, started.stderr);
+ const dir = started.stdout.trim();
+ writeFileSync(join(repo, "tracked.txt"), "changed");
+ const snapshot = invoke("snapshot", dir); assert.equal(snapshot.status, 0, snapshot.stderr);
+ assert.equal(invoke("scope", dir).status, 0);
+ const stopped = invoke("stop", dir); assert.equal(stopped.status, 0, stopped.stderr);
+});
+test("snapshot and scope handle 300 dirty files within 20 seconds", (t) => {
+ const repo = gitRepo(t); const tmp = tempDir(t, "may scope scale ");
+ writeFileSync(join(repo, "tracked"), "base"); git(repo, "add", "."); git(repo, "commit", "-qm", "base");
+ const invoke = (...args: string[]) => spawnSync(bash, [join(root, script), ...args], { cwd: repo, encoding: "utf8", timeout: 120000, env: { ...process.env, TMPDIR: tmp } });
+ const started = invoke("start"); assert.equal(started.status, 0, started.stderr);
+ const dir = started.stdout.trim();
+ for (let i = 0; i < 300; i++) writeFileSync(join(repo, `file ${i}.txt`), "before");
+ const begin = performance.now();
+ const snapshot = invoke("snapshot", dir); assert.equal(snapshot.status, 0, snapshot.stderr);
+ const unchanged = invoke("scope", dir); assert.equal(unchanged.status, 0, unchanged.stderr);
+ const elapsed = performance.now() - begin;
+ assert.ok(elapsed < 20000, `snapshot and scope took ${elapsed.toFixed(0)}ms`);
+ writeFileSync(join(repo, "file 177.txt"), "after");
+ const changed = invoke("scope", dir); assert.equal(changed.status, 1); assert.match(changed.stdout, /file 177\.txt/);
+ const stopped = invoke("stop", dir); assert.equal(stopped.status, 0, stopped.stderr);
+});
+test("snapshot and scope compare dirty content, reversions, paths and HEAD", (t) => {
+ const repo = gitRepo(t); const tmp = tempDir(t, "may scope ");
+ const scriptPath = join(root, script);
+ const invoke = (...args: string[]) => spawnSync(bash, [scriptPath, ...args], { cwd: repo, encoding: "utf8", timeout: 15000, env: { ...process.env, TMPDIR: tmp } });
+ writeFileSync(join(repo, "dirty.txt"), "base"); writeFileSync(join(repo, "space file.txt"), "base");
+ git(repo, "add", "."); git(repo, "commit", "-qm", "base");
+ const started = invoke("start"); assert.equal(started.status, 0, started.stderr);
+ const dir = started.stdout.trim();
+ assert.equal(invoke("scope", dir).status, 2);
+ writeFileSync(join(repo, "dirty.txt"), "before");
+ assert.equal(invoke("snapshot", dir).status, 0);
+ assert.equal(invoke("scope", dir).status, 0);
+ writeFileSync(join(repo, "space file.txt"), "changed");
+ assert.equal(invoke("scope", dir, "space file.txt").status, 0);
+ writeFileSync(join(repo, "new file.txt"), "new");
+ assert.equal(invoke("scope", dir, "space file.txt").status, 1);
+ assert.equal(invoke("scope", dir, "space file.txt", "new file.txt").status, 0);
+ git(repo, "add", "new file.txt");
+ assert.equal(invoke("scope", dir, "space file.txt", "new file.txt").status, 0);
+ git(repo, "restore", "--staged", "--", "new file.txt");
+ rmSync(join(repo, "new file.txt"));
+ const outside = invoke("scope", dir); assert.equal(outside.status, 1); assert.match(outside.stdout + outside.stderr, /space file\.txt/);
+ writeFileSync(join(repo, "dirty.txt"), "after");
+ assert.equal(invoke("scope", dir, "space file.txt").status, 1);
+ assert.equal(invoke("scope", dir, "space file.txt", "dirty.txt").status, 0);
+ writeFileSync(join(repo, "dirty.txt"), "base");
+ assert.equal(invoke("scope", dir, "space file.txt").status, 1);
+ assert.equal(invoke("scope", dir).status, 1);
+ assert.equal(invoke("snapshot", dir).status, 0);
+ assert.equal(invoke("scope", dir).status, 0);
+ git(repo, "add", "."); git(repo, "commit", "-qm", "next");
+ const moved = invoke("scope", dir, "space file.txt", "dirty.txt");
+ assert.equal(moved.status, 1); assert.match(moved.stdout + moved.stderr, /[a-f0-9]{40}/);
+ const stopped = invoke("stop", dir); assert.equal(stopped.status, 0, stopped.stderr);
+});
 test("start creates a marked temp directory and prints only its path", (t) => {
  const tmp = tempDir(t, "may tmp "); const out = run(tmp, "start"); assert.equal(out.status, 0, out.stderr);
  const dir = out.stdout.trim(); assert.match(dir, /may-[^/\\]+$/);
@@ -34,6 +98,13 @@ test("printed session paths open outside Bash", (t) => {
  assert.equal(kept.stdout.trim(), dir, "stop --keep must print the same native path as start, whatever form it was given");
  assert.equal(existsSync(join(kept.stdout.trim(), ".may-session")), true);
  const stopped = run(tmp, "stop", dir); assert.equal(stopped.status, 0, stopped.stderr); assert.equal(existsSync(dir), false);
+});
+test("stop accepts a Windows drive-form MSYS path under the temp root", { skip: process.platform !== "win32" }, (t) => {
+ const tmp = process.env.TEMP!; const out = run(tmp, "start"); assert.equal(out.status, 0, out.stderr);
+ const dir = out.stdout.trim(); t.after(() => rmSync(dir, { recursive: true, force: true }));
+ assert.match(dir, /^[A-Za-z]:\//);
+ const msysDir = `/${dir[0].toLowerCase()}${dir.slice(2)}`;
+ const stopped = run(tmp, "stop", msysDir); assert.equal(stopped.status, 0, stopped.stderr); assert.equal(existsSync(dir), false);
 });
 test("stop removes a validated session folder", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), false); });
 test("stop --keep leaves the folder and prints its path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir, "--keep"); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), true); assert.equal(out.stdout.trim(), dir.replaceAll("\\", "/")); });

@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-usage() { printf 'Usage: may-session.sh start | stop <dir> [--keep] | sweep [--max-age-hours N] | track <dir> <pid>\n' >&2; }
+usage() { printf 'Usage: may-session.sh start | stop <dir> [--keep] | sweep [--max-age-hours N] | track <dir> <pid> | snapshot <dir> | scope <dir> [path...]\n' >&2; }
 tmp_root="${TMPDIR:-${TEMP:-${TMP:-/tmp}}}"
 mkdir -p "$tmp_root"
 tmp_root="$(cd "$tmp_root" && pwd -P)"
+native_root=""
+case "$(uname -s)" in MINGW*|MSYS*|CYGWIN*) native_root="$(cygpath -m "$tmp_root")" ;; esac
 
 session_path() {
  local target="${1//\\//}" parent name
  while [[ "$target" == */ ]] && [ "$target" != / ]; do target="${target%/}"; done
  [ -n "$target" ] && [ -d "$target" ] && [ ! -L "$target" ] || return 1
  validated_session="$(cd "$target" && pwd -P)" || return 1
- parent="$(dirname "$validated_session")"; name="$(basename "$validated_session")"
- [ "$parent" = "$tmp_root" ] && [[ "$name" =~ ^may-.+ ]] && [ -f "$validated_session/.may-session" ] && [ ! -L "$validated_session/.may-session" ]
+ parent="${validated_session%/*}"; name="${validated_session##*/}"
+ # Git Bash may print the temp folder as /tmp or /c/...; compare the native form.
+ if [ "$parent" != "$tmp_root" ] && [ -n "$native_root" ]; then parent="$(cygpath -m "$parent")" || return 1; [ "$parent" = "$native_root" ] || return 1
+ else [ "$parent" = "$tmp_root" ] || return 1
+ fi
+ [[ "$name" =~ ^may-.+ ]] && [ -f "$validated_session/.may-session" ] && [ ! -L "$validated_session/.may-session" ]
 }
 
 # Print a path that native Windows tools can open too (C:/... instead of MSYS /tmp/...).
@@ -184,8 +190,97 @@ sweep() {
  done
 }
 
+scope_flush() {
+ local path hash
+ [ "${#files[@]}" -gt 0 ] || return 0
+ git hash-object -- "${files[@]}" > "$dir/.scope-hashes" || return 1
+ exec 3< "$dir/.scope-hashes"
+ for path in "${files[@]}"; do
+  IFS= read -r hash <&3 || return 1
+  printf '%s\t%s\0' "$path" "$hash" >> "$dir/.scope-current"
+ done
+ exec 3<&-
+ files=()
+}
+
+scope_record() {
+ local path=$1
+ case "$path" in *$'\t'*|*$'\n'*) printf 'Scope cannot represent a path containing a tab or newline\n' >&2; return 2 ;; esac
+ if [ -e "$path" ] || [ -L "$path" ]; then
+  files[${#files[@]}]=$path
+  if [ "${#files[@]}" -ge 80 ]; then scope_flush || return 1; fi
+ else
+  printf '%s\tdeleted\0' "$path" >> "$dir/.scope-current"
+ fi
+}
+
+scope_state() {
+ local entry path
+ local -a files=()
+ git status --porcelain=v1 -z --untracked-files=all > "$dir/.scope-status" || return 1
+ : > "$dir/.scope-current"
+ while IFS= read -r -d '' entry; do
+  path=${entry:3}
+  scope_record "$path" || return $?
+  if [[ ${entry:0:2} == *R* || ${entry:0:2} == *C* ]]; then
+   IFS= read -r -d '' path || return 1
+   scope_record "$path" || return $?
+  fi
+ done < "$dir/.scope-status"
+ scope_flush || return 1
+}
+
+scope_emit() {
+ local arg
+ [ -n "$path" ] && [ "$old" != "$new" ] || return 0
+ for arg in "$@"; do [ "$path" != "$arg" ] || return 0; done
+ printf '%s\n' "$path"
+ result=1
+}
+
+scope_command() {
+ local action=$1 head root record path previous old new tag value result=0
+ shift
+ [ "$#" -ge 1 ] && [ -n "$1" ] || { usage; return 2; }
+ [ "$action" != snapshot ] || [ "$#" -eq 1 ] || { usage; return 2; }
+ session_path "$1" || { usage; return 2; }
+ dir=$validated_session; shift
+ root=$(git rev-parse --show-toplevel) || return 1
+ cd "$root"
+ head=$(git rev-parse HEAD) || return 1
+ if [ "$action" = scope ] && [ ! -f "$dir/scope-snapshot" ]; then
+  printf 'Missing scope snapshot\n' >&2; return 2
+ fi
+ scope_state || return $?
+ if [ "$action" = snapshot ]; then
+  { printf '%s\0' "$head"; cat "$dir/.scope-current"; } > "$dir/scope-snapshot"
+  return 0
+ fi
+ {
+  IFS= read -r -d '' old || return 2
+  cat > "$dir/.scope-baseline"
+ } < "$dir/scope-snapshot"
+ if [ "$old" != "$head" ]; then printf 'HEAD: %s -> %s\n' "$old" "$head"; result=1; fi
+ {
+  while IFS= read -r -d '' record; do printf '%s\tB\0' "$record"; done < "$dir/.scope-baseline"
+  while IFS= read -r -d '' record; do printf '%s\tC\0' "$record"; done < "$dir/.scope-current"
+ } | LC_ALL=C sort -z > "$dir/.scope-sorted"
+ previous=; old=; new=
+ while IFS= read -r -d '' record; do
+  path=${record%%$'\t'*}; value=${record#*$'\t'}; tag=${value##*$'\t'}; value=${value%$'\t'*}
+  if [ "$path" != "$previous" ]; then
+   path=$previous; scope_emit "$@"
+   path=${record%%$'\t'*}; previous=$path; old=; new=
+  fi
+  if [ "$tag" = B ]; then old=$value; else new=$value; fi
+ done < "$dir/.scope-sorted"
+ path=$previous; scope_emit "$@"
+ return "$result"
+}
+
 if [ "${BASH_SOURCE[0]}" != "$0" ]; then return 0; fi
 case "${1:-}" in
+ snapshot|scope) action=$1; shift; scope_command "$action" "$@" ;;
  start)
   [ "$#" -eq 1 ] || { usage; exit 2; }
   sweep >/dev/null

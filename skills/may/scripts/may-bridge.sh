@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
- printf 'Usage: may-bridge.sh validate <packet.json>\n       may-bridge.sh host\n       may-bridge.sh open <program> [args...]\n' >&2
+ printf 'Usage: may-bridge.sh validate <packet.json>\n       may-bridge.sh host\n       may-bridge.sh harnesses\n       may-bridge.sh open <program> [args...]\n' >&2
  exit 2
 }
 
@@ -77,6 +77,7 @@ open_pane() {
 }
 
 case ${1:-} in
+ harnesses) [ "$#" -eq 1 ] || usage; for harness in claude codex omp pi; do if command -v "$harness" >/dev/null 2>&1; then printf '%s\n' "$harness"; fi; done; exit 0 ;;
  host) [ "$#" -eq 1 ] || usage; detect_host; exit 0 ;;
  open) shift; { [ "$#" -ge 1 ] && [ -n "$1" ]; } || usage; open_pane "$@"; exit 0 ;;
  validate) { [ "$#" -eq 2 ] && [ -n "$2" ]; } || usage ;;

@@ -14,12 +14,16 @@ The harness runs the agent and controls access. MAY skills guide its decisions; 
 
 | Script | Purpose |
 |---|---|
-| [may-session.sh](../scripts/may-session.sh) | Create marked OS-temp folders, record processes, and stop or recover a session |
+| [may-session.sh](../scripts/may-session.sh) | Create marked OS-temp folders, record processes, check snapshot scope, and stop or recover a session |
 | [may-verify.sh](../scripts/may-verify.sh) | Run criterion commands and print a revision-aware `MAY VERIFY` table |
 | [may-e2e.sh](../scripts/may-e2e.sh) | Run the project's already-installed Playwright tests, optionally starting a local server |
-| [may-bridge.sh](../scripts/may-bridge.sh) | Optionally validate a user-selected ideation packet with an already-installed Node.js 18 or newer, report the terminal host, or open a pane in it |
+| [may-bridge.sh](../scripts/may-bridge.sh) | Validate an ideation packet, list harnesses on PATH, report the terminal host, or open a pane in it |
 
 Session and verification scripts require Bash, Git, and core/system utilities. Use Git Bash on Windows and quote paths. Only the initial invocation needs that explicit Bash: the scripts run their helpers and criterion commands with the same interpreter that launched them, regardless of which `bash` comes first on `PATH`. The optional E2E runner also needs npx and installed Playwright, plus curl when waiting for a server. The optional [ideation packet validator](ideation-bridge.md) needs an already-installed Node.js 18 or newer; it does not install dependencies or store workflow state. Node is also required for MAY's repository tests. MAY does not provision a browser connection or install dependencies automatically.
+
+`may-session.sh snapshot <dir>` records HEAD and dirty paths in the marked session; `scope <dir> [path...]` checks later changes against the allowed paths (no paths for a read-only review). `may-bridge.sh harnesses` lists available harness commands on PATH, not authenticated models.
+
+`scope` does not detect ignored files such as `.env` or build output.
 
 ## Acceptance checks
 

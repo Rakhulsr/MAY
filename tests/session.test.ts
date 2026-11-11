@@ -107,6 +107,7 @@ test("stop accepts a Windows drive-form MSYS path under the temp root", { skip: 
  const stopped = run(tmp, "stop", msysDir); assert.equal(stopped.status, 0, stopped.stderr); assert.equal(existsSync(dir), false);
 });
 test("stop removes a validated session folder", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), false); });
+test("stop reports the removed session path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir); assert.equal(out.status, 0, out.stderr); assert.match(out.stdout, /^Removed /); assert.equal(out.stdout.trim().slice("Removed ".length), dir.replaceAll("\\", "/")); });
 test("stop --keep leaves the folder and prints its path", (t) => { const tmp = tempDir(t, "may tmp "); const dir = session(tmp); const out = run(tmp, "stop", dir, "--keep"); assert.equal(out.status, 0, out.stderr); assert.equal(existsSync(dir), true); assert.equal(out.stdout.trim(), dir.replaceAll("\\", "/")); });
 test("stop rejects unsafe or unmarked targets without deleting them", (t) => {
  const tmp = tempDir(t, "may tmp "); const plain = join(tmp, "may-unmarked"); mkdirSync(plain); const outside = session(tempDir(t, "may outside "), "may-outside");

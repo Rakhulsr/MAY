@@ -294,7 +294,7 @@ case "${1:-}" in
   session_path "$2" || { printf 'Refusing unsafe or unmarked session path: %s\n' "$2" >&2; exit 2; }
   dir="$validated_session"
   stop_recorded "$dir"
-  if [ "$keep" -eq 1 ]; then native_path "$dir"; else remove_session "$dir"; fi ;;
+  if [ "$keep" -eq 1 ]; then native_path "$dir"; else shown="$(native_path "$dir")"; remove_session "$dir" && printf 'Removed %s\n' "$shown"; fi ;;
  sweep) shift; sweep "$@" ;;
  track)
   [ "$#" -eq 3 ] && [[ "$3" =~ ^[1-9][0-9]*$ ]] && [ "$3" -gt 1 ] || { usage; exit 2; }

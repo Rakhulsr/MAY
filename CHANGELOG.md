@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- `may-session.sh stop` prints `Removed <path>` after deleting a session instead of nothing.
+- Tier S offers an independent read-only `may-tech-lead` reviewer when the change alters an exported or multi-caller function; the tier stays S and the reviewer starts only on the user's yes.
+
 ## 0.4.0
 
 - Add session `snapshot` and `scope` checks for worker changes and `may-bridge.sh harnesses` to list harness commands on PATH.

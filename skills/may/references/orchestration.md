@@ -24,7 +24,7 @@ An area is one layer or module the change touches, such as a data store, HTTP AP
 |---|---|---|
 | L | Work the user asks to phase or too large for one review, auth or data risk across areas, or changes in several areas that touch the same files | One named implementer per workstream, sequentially or as [parallel writers](#parallel-writers), named reviewers for relevant risks, and a [phase reset](phase-reset.md) between phases |
 | M | Two or more areas, any contract change, auth or data risk within one area, or other moderate risk that warrants independent review | One named implementer per workstream, with [parallel writers](#parallel-writers) when files are disjoint, and one named read-only reviewer: `may-tech-lead` by default, `may-security` for auth or sensitive data, `may-ui-ux` for user flows |
-| S | Everything else: one area, no contract change, low risk | No workers. The coordinator implements inline as the relevant role, then self-reviews with the `may-tech-lead` lens and discloses that review is not independent |
+| S | Everything else: one area, no contract change, low risk | No workers. The coordinator implements inline as the relevant role, then self-reviews with the `may-tech-lead` lens and discloses that review is not independent. When the change alters an exported or public function, or one with several callers (check with a search), offer the user an independent read-only `may-tech-lead` reviewer in the plan; the tier stays S, and only the user's yes starts it |
 
 At tier M or L, read-only workers for exploration, QA test design, or security or UX plan checks may run alongside implementers.
 

@@ -26,14 +26,14 @@ Map each criterion to the smallest check that can disprove it. A label correctio
 ## Workflow
 
 1. Derive an acceptance matrix mapping each criterion to checks and evidence. Separate functional, regression, negative, security, accessibility and operational concerns as relevant.
-2. Inspect candidate code and tests. When integration behavior is a material risk and an authorized, safe target, candidate and relevant regression are ready, run that regression early, even before review; label its result preliminary and record the target, candidate, command, exit and output. A missing or unsafe target is blocked, not passed. Require current acceptance of every changed source/test delta before final QA, including repairs and tests-only changes; return unreviewed deltas to the reviewer (or the disclosed tier S Tech Lead self-review). User-provided code needs the same proof as agent-written code.
+2. Inspect candidate code and tests. When integration behavior is a material risk and an authorized, safe target, candidate and relevant regression are ready, run that regression early, even before review; label its result preliminary and record the target, candidate, command, exit and output. A missing or unsafe target is blocked, not passed. Require current acceptance of every changed source/test delta before final QA, including repairs and tests-only changes; return unreviewed deltas to the reviewer (or the disclosed tier S Tech Lead self-review, or a disclosed small prescribed repair). User-provided code needs the same proof as agent-written code.
 3. Select the smallest meaningful test set. Prefer existing unit/integration tests; use browser E2E only for behaviors that require real UI/user flow. Do not call E2E merely to decorate reports.
 4. Run `../may/scripts/may-verify.sh` through Bash with the plan's exact criterion checks and `--log-dir` set to the session folder; display the complete output table and read only the failing logs you need. Resolve this path from the installed role skill, not the project root.
 5. For browser criteria use a trusted browser connection or `../may/scripts/may-e2e.sh`, following [browser verification](../may/references/browser.md) for its session, exit codes, and cleanup; confirm the test target. Screenshots alone do not prove behavior.
 6. Any later source, test, build, or fixture change invalidates affected evidence. Renew acceptance of changed deltas first, then rerun affected checks before a passing claim; a tests-only repair cannot skip review.
 7. File actionable defects with severity, reproduction, observed vs expected, implicated criterion, exact evidence and minimal suggested rework scope.
 8. Recommend task results as verified / failed / stale / untested / inconclusive / blocked. A test that was never run is not PASS. A host-declined action is not executed.
-9. Send actionable regressions back to implementation; after repair, wait for renewed review acceptance before verifying the repaired candidate.
+9. Send actionable regressions back to implementation; after repair, wait for renewed review acceptance before verifying the repaired candidate, except a disclosed small prescribed repair (`../may/references/orchestration.md#execute-and-review`).
 
 ## Expected deliverables (select only what this scope needs)
 

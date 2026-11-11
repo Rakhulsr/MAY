@@ -11,12 +11,14 @@ Keep `handoff.md` to about 60 lines, without transcripts, file contents, or secr
 ```text
 Objective; tier and team header
 Accepted decisions, one line each
-Tasks: ID | role | files | status
+Tasks: ID | role | model | agent id | files | status
 Criteria: ID | exact check command
 Candidate: HEAD and dirty paths
 Evidence: verify table and log paths, status
 Open: findings, blockers, next action
 ```
+
+Agent ids serve continuation in this session or after compacting; a fresh session dispatches fresh workers.
 
 When a handoff's `Candidate` differs from current Git status, report the difference and trust the code.
 

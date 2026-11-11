@@ -115,14 +115,14 @@ The coordinator picks a tier from the areas the change touches (a data store, AP
 | Tier | When | Team |
 |---|---|---|
 | S | One area, no contract change, low risk | No workers; the coordinator implements inline and self-reviews with the Tech Lead lens, disclosed as not independent |
-| M | Two or more areas, a contract change, or auth or data risk in one area | One named implementer per workstream and one read-only reviewer chosen by risk (`may-tech-lead`, `may-security`, or `may-ui-ux`) |
-| L | Phased or very large work, risk across areas, or areas touching the same files | One implementer per workstream, named reviewers per risk, and a [phase reset](skills/may/references/phase-reset.md) between phases |
+| M | Two or more areas, a contract change consumed outside the changed files, or auth or data risk in one area | One named implementer per workstream and one read-only reviewer chosen by risk (`may-tech-lead`, `may-security`, or `may-ui-ux`) |
+| L | Phased or very large work, or auth or data risk across areas | One implementer per workstream, named reviewers per risk, and a [phase reset](skills/may/references/phase-reset.md) between phases |
 
-Only you can move work to a smaller tier. Long work can end a phase with a `handoff.md` in the session folder, which a fresh session reads only from a path you give it and rechecks against Git.
+Sequential pieces that edit the same files form one workstream for one worker. Only you can move work to a smaller tier. Long work can end a phase with a `handoff.md` in the session folder, which a fresh session reads only from a path you give it and rechecks against Git.
 
 The coordinator dispatches workers; [bridged leads](skills/may/references/orchestration.md#bridged-leads) can dispatch their own leaf workers. Tier M and L workstreams can use [parallel writers](skills/may/references/orchestration.md#parallel-writers) on disjoint files in a shared or isolated checkout; read-only workers can run alongside them. At plan acceptance you see each worker's role, task, harness, and model and can keep or change the per-run team. Repairs return to the same worker when native continuation is available, and reports list harness-reported worker usage or `unavailable`. Tier S implements inline with disclosed Tech Lead self-review; the coordinator runs final verification in every tier. Without delegation, tasks run sequentially with the same disclosure.
 
-Every source and test repair returns to review before final QA. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
+Every source and test repair returns to review before final QA, except a small repair the reviewer prescribed exactly (at most 20 lines, no contract change, no weaker test), which the coordinator may apply as a disclosed self-review. Workers and reviewers run focused tests; the full suite runs once at final verification. After two unsuccessful repair rounds, the agent asks you how to proceed. Changes to source, tests, builds, or fixtures invalidate affected evidence. The [orchestration contract](skills/may/references/orchestration.md) defines the full planning and acceptance rules; the [runtime guide](skills/may/references/runtime.md#what-runs-where) shows the execution boundary.
 
 `may-session.sh snapshot <dir>` records the checkout baseline; `scope <dir> [path...]` reports changes outside the listed paths. The [runtime guide](skills/may/references/runtime.md) describes the scripts.
 

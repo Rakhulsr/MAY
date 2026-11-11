@@ -6,7 +6,7 @@
 
 Workflow skills for coding agents.
 
-MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships ten skills and four Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
+MAY helps an agent turn a coding goal into a scoped plan, implementation, review, and acceptance evidence. It ships eleven skills and four Bash scripts for use with Pi, Oh My Pi, Codex, and Claude Code. A small repair can stay with one agent; complex work can use a coordinator and relevant workers.
 
 Your harness still controls models, accounts, tools, permissions, and delegation. MAY supplies written guidance and deterministic scripts, not a workflow engine or sandbox.
 
@@ -160,6 +160,7 @@ Roles are responsibility profiles, not mandatory processes. They give advice gro
 | [may-security](skills/may-security/SKILL.md) | Threat modeling, auth, secrets, trust boundaries, and review |
 | [may-devops](skills/may-devops/SKILL.md) | Development environments, builds, CI, and deployment risk |
 | [may-config](skills/may-config/SKILL.md) | Per-role model choices in Claude Code, Oh My Pi, Codex, or Pi (pi-subagents) project agent files, written only after approval |
+| [may-turbo](skills/may-turbo/SKILL.md) | Cross-harness teams with user-selected harnesses and models |
 
 Each role except `may-config` also ships as a worker agent in [`agents/`](agents/), named after the role and preloading its skill, so a dispatched worker appears as `may-backend` rather than a generic agent. Claude Code lists them as `may:may-<role>`. The package also declares them for Pi with pi-subagents, untested there so far. Oh My Pi and Codex plugins do not ship agents, so there the coordinator uses `may-config` project agents or the native default with a role brief.
 

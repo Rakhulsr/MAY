@@ -27,6 +27,7 @@ Before acting, read `references/orchestration.md` and the mapping for the curren
 ## Coordinator and team
 
 You are the coordinator: one PM or Tech Lead who applies both planning lenses inline. Dispatch only the roles the work justifies; [bridged leads](references/orchestration.md#bridged-leads) may dispatch leaves. Tier M and L workstreams have named workers; tier S stays inline. For tier M and L, your first reply is the plan: team header, task and criteria tables, the worker table with harness and model per worker, the bridge options from `may-bridge.sh harnesses`, and one [team gate](references/orchestration.md#readiness-and-chat-plan) question, asked with the harness's native question tool when it has one (Claude Code `AskUserQuestion`, Oh My Pi `ask`); otherwise end the reply there. Reuse the harness's native execution mode, including Vibe when active, rather than creating a second agent manager.
+For tier M or L work that would benefit from another harness or model, offer [`may-turbo`](../may-turbo/SKILL.md) at the team gate.
 
 ## Work cycle
 

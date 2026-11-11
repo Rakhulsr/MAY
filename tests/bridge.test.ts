@@ -219,6 +219,32 @@ test("harnesses reports only installed commands in order", (t) => {
  assert.equal(none.stdout, "");
 });
 
+test("harnesses --models lists user-visible models and marks failed listings", (t) => {
+	const bin = tempDir(t);
+	stub(bin, "omp", '{"models":[{"selector":"openai-codex/gpt-6-luna","kind":"chat"},{"selector":"anthropic/claude-sonnet","kind":"chat"},{"selector":"image/model","kind":"image"}]}');
+	stub(bin, "pi", "Provider Model Context\nopenai-codex gpt-6-luna 128k\nanthropic claude-sonnet 200k");
+	stub(bin, "claude");
+	stub(bin, "codex");
+	const found = runHost(bin, bin, { PATH: bin }, "harnesses", "--models");
+	assert.equal(found.status, 0, found.stderr);
+	assert.equal(found.stdout.replaceAll("\r\n", "\n"), [
+		"claude\topus",
+		"claude\tsonnet",
+		"claude\thaiku",
+		"codex\t-",
+		"omp\topenai-codex/gpt-6-luna",
+		"omp\tanthropic/claude-sonnet",
+		"pi\topenai-codex/gpt-6-luna",
+		"pi\tanthropic/claude-sonnet",
+		"",
+	].join("\n"));
+
+	stub(bin, "omp", "", 1);
+	const failed = runHost(bin, bin, { PATH: bin }, "harnesses", "--models");
+	assert.equal(failed.status, 0, failed.stderr);
+	assert.match(failed.stdout.replaceAll("\r\n", "\n"), /(?:^|\n)omp\t-\n/);
+});
+
 function calls(bin: string) {
 	const log = join(bin, "calls.log");
 	return existsSync(log) ? readFileSync(log, "utf8").split("@@end\n").filter(Boolean).map((c) => c.trimEnd().split("\n")) : [];

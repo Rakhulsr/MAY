@@ -61,7 +61,7 @@ npm run check
 
 Keep versions consistent across `package.json`, `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.codex-plugin/plugin.json`, and `.omp-plugin/marketplace.json`; use the existing version-maintenance script when a version change is requested. Preserve the explicit npm public-file allowlist and inspect the actual artifact inventory after distribution changes.
 
-Installation discovery establishes only `installable`: ten skills and three runnable runtime scripts on a named harness version. It does not cover the role agents; report their discovery separately per harness. `workflow-tested` requires real-model evidence for small repair, feature/review/QA, fail-fix-pass, and interruption followed by a fresh session. Keep README and changelog claims aligned with actual attempts, including failures, permission or credential blockers, model/version, and untested platforms. Fake models and file discovery are not substitutes.
+Installation discovery establishes only `installable`: eleven skills and three runnable runtime scripts on a named harness version. It does not cover the role agents; report their discovery separately per harness. `workflow-tested` requires real-model evidence for small repair, feature/review/QA, fail-fix-pass, and interruption followed by a fresh session. Keep README and changelog claims aligned with actual attempts, including failures, permission or credential blockers, model/version, and untested platforms.
 
 ## Temporary work and delivery
 

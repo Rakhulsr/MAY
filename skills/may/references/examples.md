@@ -28,10 +28,10 @@ QA: checked accepted C1 with the planned command and required inputs;
 report actual output and missing evidence, not an assumed PASS.
 ```
 
-A response-contract change consumed by multiple UI surfaces needs a different assessment: explain the contract/regression risk, serialize shared-file writers, and justify independent review. Reading Backend, Frontend, PM, or Tech Lead profiles inline does not start those workers.
+A response-contract change consumed by multiple UI surfaces needs a different assessment: explain the contract/regression risk, give same-file pieces to one implementer, and justify independent review. Reading Backend, Frontend, PM, or Tech Lead profiles inline does not start those workers.
 
 ```text
-Tier: L | Team: Tech Lead (coordinator) · may-backend (planned) · may-frontend (planned) ·
+Tier: M | Team: Tech Lead (coordinator) · may-backend (planned) · may-frontend (planned) ·
 may-tech-lead (reviewer, planned) · Security (inline lens) | Review: pending
 ```
 

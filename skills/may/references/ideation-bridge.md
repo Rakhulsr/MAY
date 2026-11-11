@@ -18,7 +18,7 @@ Codex runs OpenAI models and Claude Code runs Anthropic models; other models the
 
 A bridged implementer starts only when the user chooses it at the [team gate](orchestration.md#readiness-and-chat-plan). Bridged writers and reviewers use the same [batch scope and fresh reviewer snapshot sequence](orchestration.md#parallel-writers) as native workers.
 
-For a pane run, write the brief in the session folder, including the [role contract](role-contract.md) result shape. A bridged lead's result must also list each dispatched leaf's role, model, and usage, or `none`. Tell a writer to write `result-<worker>.md` there as its last step; for a read-only reviewer, the coordinator saves its result block there instead. Open the normal interactive TUI with `may-bridge.sh open`, giving the brief path as the first prompt and a model only as the user named it. Never use auto-approve or yolo flags; the user answers permission prompts in the pane.
+For a pane run, write the brief in the session folder, including the [role contract](role-contract.md) result shape. A bridged lead's result must also list each dispatched leaf's role, model, and usage, or `none`. Tell a writer to write `result-<worker>.md` there as its last step, and for a Codex writer pass `--add-dir "$session"` so that write stays inside its sandbox; for a read-only reviewer, the coordinator saves its result block there instead. Open the normal interactive TUI with `may-bridge.sh open`, giving the brief path as the first prompt and a model only as the user named it. Never use auto-approve or yolo flags; the user answers permission prompts in the pane.
 
 ```bash
 bash "$MAY_SKILL_DIR/scripts/may-bridge.sh" host
